@@ -1,0 +1,82 @@
+[
+  {
+    "id": "orbital_dynamics",
+    "name": "Orbital Dynamics Corp",
+    "specialties": ["propulsion", "launch_vehicle"],
+    "costMultiplier": 0.85,
+    "reliabilityMod": -0.03,
+    "scheduleMod": 1.15,
+    "politicalWeight": 0.4,
+    "description": "Cheap, fast, and their upper stage has an interesting history."
+  },
+  {
+    "id": "aegis_heavy",
+    "name": "Aegis Heavy Industries",
+    "specialties": ["launch_vehicle", "structure"],
+    "costMultiplier": 1.18,
+    "reliabilityMod": 0.025,
+    "scheduleMod": 0.92,
+    "politicalWeight": 0.85,
+    "description": "Legacy prime. Overbuilt, on time, and they know every office on the Hill."
+  },
+  {
+    "id": "helios_propulsion",
+    "name": "Helios Propulsion",
+    "specialties": ["propulsion", "nuclear"],
+    "costMultiplier": 1.25,
+    "reliabilityMod": 0.02,
+    "scheduleMod": 1.08,
+    "politicalWeight": 0.35,
+    "description": "The shop you call when the engine has to light on the first try."
+  },
+  {
+    "id": "red_latitude",
+    "name": "Red Latitude Systems",
+    "specialties": ["edl", "heatshield", "avionics"],
+    "costMultiplier": 1.1,
+    "reliabilityMod": 0.015,
+    "scheduleMod": 1.0,
+    "politicalWeight": 0.3,
+    "description": "Seven minutes of terror is their entire product line."
+  },
+  {
+    "id": "cassiopeia_hab",
+    "name": "Cassiopeia Habitats",
+    "specialties": ["life_support", "habitat"],
+    "costMultiplier": 1.05,
+    "reliabilityMod": 0.01,
+    "scheduleMod": 0.97,
+    "politicalWeight": 0.25,
+    "description": "They treat a leak as a personal insult. Good."
+  },
+  {
+    "id": "basalt_works",
+    "name": "Basalt Works",
+    "specialties": ["isru", "construction"],
+    "costMultiplier": 0.92,
+    "reliabilityMod": -0.01,
+    "scheduleMod": 1.1,
+    "politicalWeight": 0.15,
+    "description": "Dirt people. If it can be sintered, they have a slide deck."
+  },
+  {
+    "id": "lumen_power",
+    "name": "Lumen Power Cooperative",
+    "specialties": ["power", "nuclear", "solar"],
+    "costMultiplier": 1.12,
+    "reliabilityMod": 0.02,
+    "scheduleMod": 1.05,
+    "politicalWeight": 0.55,
+    "description": "Reactors and arrays. Politically expensive, electrically not."
+  },
+  {
+    "id": "north_range",
+    "name": "North Range Avionics",
+    "specialties": ["avionics", "comms"],
+    "costMultiplier": 1.08,
+    "reliabilityMod": 0.018,
+    "scheduleMod": 0.95,
+    "politicalWeight": 0.45,
+    "description": "Flight computers that still boot after a 9 g entry."
+  }
+]

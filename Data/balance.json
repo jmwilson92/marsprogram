@@ -1,0 +1,99 @@
+{
+  "version": "1.0.0",
+  "time": {
+    "solSeconds": 88775,
+    "earthDaySeconds": 86400,
+    "marsYearSols": 668.6,
+    "marsYearEarthDays": 687,
+    "synodicEarthDays": 779.9,
+    "firstWindowEarthDay": 210
+  },
+  "orbit": {
+    "eccentricity": 0.0934,
+    "axialTiltDeg": 25.19,
+    "lsPerihelionDeg": 270,
+    "solarConstantMean_wm2": 586,
+    "gravity_mps2": 3.72,
+    "radius_km": 3389.5,
+    "surfacePressure_pa": 610
+  },
+  "human": {
+    "o2_kg_per_sol": 0.84,
+    "co2_kg_per_sol": 1.0,
+    "waterDrink_kg_per_sol": 3.5,
+    "waterHygiene_kg_per_sol": 22,
+    "foodDry_kg_per_sol": 1.8,
+    "kcal_per_sol": 2800,
+    "minVolume_m3": 25,
+    "cropArea_m2": 52,
+    "careerDose_mSv": 1000,
+    "deepSpaceDose_mSv_per_day": 1.8,
+    "surfaceDose_mSv_per_sol": 0.67
+  },
+  "energy": {
+    "iceToWater_kwh_per_kg": 2.8,
+    "electrolysis_kwh_per_kg": 5.5,
+    "co2Capture_kwh_per_kg": 0.6,
+    "moxie_kwh_per_kg_o2": 8.0,
+    "sinter_kwh_per_kg": 2.1
+  },
+  "deltaV_mps": {
+    "earthToLeo": 9400,
+    "leoToTmi": 3600,
+    "tmiToCapturePropulsive": 1400,
+    "tmiToAerocapture": 150,
+    "orbitToSurfaceEdl": 700,
+    "surfaceToLmo": 4100,
+    "lmoToTei": 1300
+  },
+  "economy": {
+    "startingAnnual": {
+      "DIRECTOR": 6000000000,
+      "ADMINISTRATOR": 4200000000,
+      "AUSTERITY": 2600000000,
+      "IRONMAN": 2200000000
+    },
+    "startingSupport": 58,
+    "leo_usd_per_kg": 2800,
+    "marsSurfaceEarly_usd_per_kg": 1400000,
+    "marsSurfaceYear30_usd_per_kg": 40000,
+    "starshipLaunch_usd": 850000000,
+    "boosterRefuel_usd": 52000000,
+    "starshipPayload_kg": 100000,
+    "starshipPayload_m3": 1100,
+    "rpBuy_usd": 180000
+  },
+  "edl": {
+    "earlySuccess": 0.72,
+    "matureSuccess": 0.96,
+    "stages": [
+      { "id": "entry", "label": "ENTRY INTERFACE 5.8 km/s" },
+      { "id": "peak_heat", "label": "PEAK HEATING" },
+      { "id": "peak_g", "label": "PEAK DECELERATION ~9 g" },
+      { "id": "chute", "label": "SUPERSONIC CHUTE DEPLOY" },
+      { "id": "sep", "label": "HEATSHIELD SEPARATION" },
+      { "id": "burn", "label": "LANDING BURN IGNITION" },
+      { "id": "haz", "label": "TERMINAL GUIDANCE / HAZARD AVOID" },
+      { "id": "touchdown", "label": "TOUCHDOWN" }
+    ]
+  },
+  "experience": {
+    "ascentSeconds": 540,
+    "orbitHoldSeconds": 99999,
+    "transitSeconds": 160,
+    "edlSeconds": 20,
+    "defaultSite": "jezero_north",
+    "countdownSeconds": 10
+  },
+  "cabin": {
+    "innerRadius_m": 4.15,
+    "deckHeight_m": 2.48,
+    "decks": 3,
+    "seats": 6
+  },
+  "site": {
+    "blastRadius_m": 22,
+    "workRadiusMax_m": 88,
+    "workRadiusMin_m": 40
+  }
+}

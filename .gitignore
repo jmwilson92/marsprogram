@@ -1,0 +1,36 @@
+# Unreal
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+.vs/
+.vscode/
+.idea/
+*.sln
+*.suo
+*.xcodeproj
+*.xcworkspace
+*.VC.db
+*.opendb
+
+# Unreal generated
+Source/**/*.generated.h
+*.uprojectdirs
+
+# Headless CMake build of AresCore
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor backups
+*~
+*.swp
+*.orig
+*.rej

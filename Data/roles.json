@@ -1,0 +1,65 @@
+[
+  {
+    "id": "commander",
+    "name": "Commander",
+    "class": "crew",
+    "defaultTask": "command",
+    "tasks": ["command", "eva", "explore"]
+  },
+  {
+    "id": "scientist",
+    "name": "Scientist",
+    "class": "crew",
+    "defaultTask": "science",
+    "tasks": ["science", "explore"]
+  },
+  {
+    "id": "technician",
+    "name": "Technician",
+    "class": "crew",
+    "defaultTask": "maintain",
+    "tasks": ["maintain", "construct"]
+  },
+  {
+    "id": "engineer",
+    "name": "Engineer",
+    "class": "crew",
+    "defaultTask": "construct",
+    "tasks": ["construct", "maintain"]
+  },
+  {
+    "id": "surgeon",
+    "name": "Surgeon",
+    "class": "crew",
+    "defaultTask": "medical",
+    "tasks": ["medical"]
+  },
+  {
+    "id": "navigator",
+    "name": "Navigator",
+    "class": "crew",
+    "defaultTask": "explore",
+    "tasks": ["explore", "command"]
+  },
+  {
+    "id": "pilot",
+    "name": "Pilot",
+    "class": "crew",
+    "defaultTask": "explore",
+    "tasks": ["explore", "construct"]
+  },
+  {
+    "id": "botanist",
+    "name": "Botanist",
+    "class": "crew",
+    "defaultTask": "grow",
+    "tasks": ["grow", "maintain"]
+  },
+  {
+    "id": "citizen",
+    "name": "Citizen",
+    "class": "citizen",
+    "defaultTask": "labor",
+    "tasks": ["labor", "cook", "teach", "mine"]
+  }
+]
