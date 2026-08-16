@@ -250,6 +250,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	int32 TreeCount = 260;
 
+	/**
+	 * Edge length of one ground tile, metres.
+	 *
+	 * Ground is drawn as a GRID of quads, not one big one, because a material
+	 * tiles by UV: a single quad stretched across the whole map stretches its
+	 * UVs with it, so any texture becomes one smeared texel per hundred metres.
+	 * Smaller tiles repeat the texture more often and cost more instances.
+	 * 25 m is a reasonable balance; drop to 10 for close-up detail.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape", meta = (ClampMin = "4"))
+	float GroundTileSizeM = 25.0f;
+
 	/** Bikes at the plaza rack, for the ride out to the pad. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	int32 BikeCount = 4;
@@ -319,6 +331,14 @@ private:
 
 	/** Grass apron and scattered trees, kept clear of roads and structures. */
 	void BuildLandscape();
+
+	/**
+	 * Fills an axis-aligned area with tiles of roughly TileSize, so an assigned
+	 * material repeats at a usable density instead of being stretched over the
+	 * whole surface.
+	 */
+	void AddTiledSurface(UInstancedStaticMeshComponent* Component, const FVector& Center,
+		const FVector2D& AreaSize, float Thickness, float TileSizeCm);
 
 	/** Bikes at the plaza. Spawned at BeginPlay alongside the terminals. */
 	void SpawnBikes();

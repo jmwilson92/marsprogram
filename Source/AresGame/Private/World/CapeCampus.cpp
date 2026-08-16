@@ -295,8 +295,10 @@ void ACapeCampus::BuildGroundAndRoad()
 	const FVector GroundCenter(PadCenter.X * 0.5f, 0.0f, -GroundSize.Z * 0.5f);
 	AddBox(GroundCenter, GroundSize);
 
-	// Plaza — a slightly raised apron marking the campus centre.
-	AddBox(FVector(0.0f, 0.0f, 5.0f), FVector(6000.0f, 6000.0f, 10.0f));
+	// Plaza — a slightly raised apron marking the campus centre. Tiled for the
+	// same reason the grass is: one 60 m quad smears a concrete texture flat.
+	AddTiledSurface(Boxes, FVector(0.0f, 0.0f, 5.0f),
+		FVector2D(6000.0f, 6000.0f), 10.0f, GroundTileSizeM * 100.0f);
 
 	// Road from the plaza edge out to the pad. One long slab; the walk is
 	// supposed to feel like a distance, not a corridor.
@@ -304,8 +306,8 @@ void ACapeCampus::BuildGroundAndRoad()
 	const float RoadLength = PadCenter.X - RoadStartX;
 	if (RoadLength > 0.0f)
 	{
-		AddBox(FVector(RoadStartX + RoadLength * 0.5f, 0.0f, 4.0f),
-			FVector(RoadLength, RoadWidth, 8.0f));
+		AddTiledSurface(Boxes, FVector(RoadStartX + RoadLength * 0.5f, 0.0f, 4.0f),
+			FVector2D(RoadLength, RoadWidth), 8.0f, GroundTileSizeM * 100.0f);
 	}
 }
 

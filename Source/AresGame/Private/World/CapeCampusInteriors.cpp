@@ -508,6 +508,36 @@ void ACapeCampus::BuildLaunchVehicle()
 /*  Landscape                                                                  */
 /* -------------------------------------------------------------------------- */
 
+void ACapeCampus::AddTiledSurface(UInstancedStaticMeshComponent* Component, const FVector& Center,
+	const FVector2D& AreaSize, float Thickness, float TileSizeCm)
+{
+	if (!Component || AreaSize.X <= 0.0f || AreaSize.Y <= 0.0f || TileSizeCm <= 0.0f)
+	{
+		return;
+	}
+
+	// Whole tiles only, then the tile size is adjusted so they exactly fill the
+	// area — a partial tile at the edge would either overhang or leave a seam.
+	const int32 CountX = FMath::Max(1, FMath::RoundToInt(AreaSize.X / TileSizeCm));
+	const int32 CountY = FMath::Max(1, FMath::RoundToInt(AreaSize.Y / TileSizeCm));
+
+	const float StepX = AreaSize.X / CountX;
+	const float StepY = AreaSize.Y / CountY;
+
+	const float OriginX = Center.X - AreaSize.X * 0.5f + StepX * 0.5f;
+	const float OriginY = Center.Y - AreaSize.Y * 0.5f + StepY * 0.5f;
+
+	for (int32 IX = 0; IX < CountX; ++IX)
+	{
+		for (int32 IY = 0; IY < CountY; ++IY)
+		{
+			AddBoxTo(Component,
+				FVector(OriginX + IX * StepX, OriginY + IY * StepY, Center.Z),
+				FVector(StepX, StepY, Thickness));
+		}
+	}
+}
+
 void ACapeCampus::BuildLandscape()
 {
 	// A green apron over the concrete, then trees scattered outside the built
@@ -516,9 +546,13 @@ void ACapeCampus::BuildLandscape()
 	// will chase.
 	const FVector GroundCenter(PadCenter.X * 0.5f, 0.0f, 0.0f);
 
-	// Grass sits a hair above the ground slab to avoid z-fighting with it.
-	AddBoxTo(Grass, GroundCenter + FVector(0.0f, 0.0f, 2.0f),
-		FVector(GroundSize.X * 0.98f, GroundSize.Y * 0.98f, 4.0f));
+	// Grass sits a hair above the ground slab to avoid z-fighting with it, and
+	// is TILED rather than being one enormous quad — see GroundTileSizeM. The
+	// collision slab underneath stays a single box, because 3000 collision
+	// primitives to stand on would be absurd when one does the job.
+	AddTiledSurface(Grass, GroundCenter + FVector(0.0f, 0.0f, 2.0f),
+		FVector2D(GroundSize.X * 0.98f, GroundSize.Y * 0.98f),
+		4.0f, GroundTileSizeM * 100.0f);
 
 	// Keep-out: the plaza, the road corridor, the pad, and each building.
 	auto IsClear = [this](const FVector& P) -> bool
