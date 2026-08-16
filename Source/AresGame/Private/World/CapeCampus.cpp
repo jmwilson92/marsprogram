@@ -1,5 +1,6 @@
 #include "World/CapeCampus.h"
 
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Materials/MaterialInterface.h"
@@ -92,6 +93,17 @@ ACapeCampus::ACapeCampus()
 	SteelCone = MakeInstanced(TEXT("SteelCone"), nullptr, true);
 	Grass = MakeInstanced(TEXT("Grass"), nullptr, false);
 	Foliage = MakeInstanced(TEXT("Foliage"), nullptr, false);
+
+	// Hierarchical: tens of thousands of clumps need per-cluster culling, which
+	// a plain instanced component does not provide.
+	GroundCover = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("GroundCover"));
+	GroundCover->SetupAttachment(Root);
+	GroundCover->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// Grass should not fight the interaction trace or cast a forest of shadows.
+	GroundCover->SetCastShadow(false);
+
+	GroundCoverSlot.Fit = ECapeFit::Uniform;
+	GroundCoverSlot.bRandomYaw = true;
 
 	// Defaults keep the fallback look sensible until real assets land.
 	StructureSlot.FallbackTint = FLinearColor(0.42f, 0.42f, 0.44f);
@@ -394,7 +406,8 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	}
 	for (UInstancedStaticMeshComponent* Component :
 		{ Cylinders.Get(), Furniture.Get(), Screens.Get(), Steel.Get(),
-		  SteelBox.Get(), SteelCone.Get(), Grass.Get(), Foliage.Get() })
+		  SteelBox.Get(), SteelCone.Get(), Grass.Get(), Foliage.Get(),
+		  GroundCover.Get() })
 	{
 		if (Component)
 		{
@@ -414,6 +427,8 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	ApplySlot(Grass, GroundSlot, FallbackCube);
 	ApplySlot(Cylinders, TrunkSlot, FallbackCylinder);
 	ApplySlot(Foliage, CanopySlot, FallbackCone);
+	// No fallback mesh: an unassigned ground-cover slot scatters nothing.
+	ApplySlot(GroundCover, GroundCoverSlot, nullptr);
 
 	BuildGroundAndRoad();
 
@@ -469,6 +484,7 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	if (bBuildLandscape)
 	{
 		BuildLandscape();
+		BuildGroundCover();
 	}
 }
 

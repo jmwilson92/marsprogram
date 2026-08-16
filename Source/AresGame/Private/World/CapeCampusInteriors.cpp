@@ -10,6 +10,7 @@
 
 #include "World/CapeCampus.h"
 
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -181,6 +182,7 @@ const FCapeMeshSlot& ACapeCampus::SlotForComponent(const UInstancedStaticMeshCom
 	if (Component == Grass) { return GroundSlot; }
 	if (Component == Cylinders) { return TrunkSlot; }
 	if (Component == Foliage) { return CanopySlot; }
+	if (Component == GroundCover) { return GroundCoverSlot; }
 	return StructureSlot;
 }
 
@@ -508,6 +510,79 @@ void ACapeCampus::BuildLaunchVehicle()
 /*  Landscape                                                                  */
 /* -------------------------------------------------------------------------- */
 
+bool ACapeCampus::IsOpenGround(const FVector& P) const
+{
+	// Road corridor.
+	if (FMath::Abs(P.Y) < RoadWidth * 1.6f && P.X > -4000.0f && P.X < PadCenter.X + 14000.0f)
+	{
+		return false;
+	}
+	// Plaza.
+	if (P.SizeSquared2D() < 9000.0f * 9000.0f)
+	{
+		return false;
+	}
+	// Pad and its flame area.
+	if (FVector::DistSquared2D(P, PadCenter) < 20000.0f * 20000.0f)
+	{
+		return false;
+	}
+	// Buildings, with a margin so nothing grows through a wall.
+	for (const FCapeBuilding& B : Buildings)
+	{
+		const FVector D = (P - B.Center).GetAbs();
+		if (D.X < B.Size.X * 0.5f + 400.0f && D.Y < B.Size.Y * 0.5f + 400.0f)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void ACapeCampus::BuildGroundCover()
+{
+	// Nothing to scatter until a real mesh is assigned. Thirty thousand grey
+	// cubes would be worse than bare ground, so this stays off rather than
+	// falling back to a primitive the way every other slot does.
+	if (!GroundCover || !GroundCoverSlot.Mesh || GroundCoverCount <= 0)
+	{
+		return;
+	}
+
+	GroundCover->SetCullDistances(0, static_cast<int32>(GroundCoverCullDistanceM * 100.0f));
+
+	const float RadiusCm = GroundCoverRadiusM * 100.0f;
+	int32 Placed = 0;
+
+	// Rejection sampling against the same keep-out the trees use. Over-sampling
+	// 3x covers the area the campus occupies without an unbounded loop.
+	for (int32 I = 0; I < GroundCoverCount * 3 && Placed < GroundCoverCount; ++I)
+	{
+		// Uniform-in-disc: sqrt on the radius, or everything piles up at the
+		// centre and the far field stays bald.
+		const float Angle = Hash01(I, 401) * 2.0f * PI;
+		const float Radius = FMath::Sqrt(Hash01(I, 409)) * RadiusCm;
+
+		const FVector P(
+			FMath::Cos(Angle) * Radius,
+			FMath::Sin(Angle) * Radius,
+			4.0f);
+
+		if (!IsOpenGround(P))
+		{
+			continue;
+		}
+
+		const float Scale = 0.65f + Hash01(I, 417) * 0.7f;
+		const float Size = GroundCoverSizeCm * Scale;
+
+		AddFitted(GroundCover, GroundCoverSlot, P, FVector(Size, Size, Size), 0.0f, I);
+		++Placed;
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("CapeCampus: scattered %d ground-cover instances."), Placed);
+}
+
 void ACapeCampus::AddTiledSurface(UInstancedStaticMeshComponent* Component, const FVector& Center,
 	const FVector2D& AreaSize, float Thickness, float TileSizeCm)
 {
@@ -554,32 +629,6 @@ void ACapeCampus::BuildLandscape()
 		FVector2D(GroundSize.X * 0.98f, GroundSize.Y * 0.98f),
 		4.0f, GroundTileSizeM * 100.0f);
 
-	// Keep-out: the plaza, the road corridor, the pad, and each building.
-	auto IsClear = [this](const FVector& P) -> bool
-	{
-		if (FMath::Abs(P.Y) < RoadWidth * 1.6f && P.X > -4000.0f && P.X < PadCenter.X + 14000.0f)
-		{
-			return false; // road corridor
-		}
-		if (P.SizeSquared2D() < 9000.0f * 9000.0f)
-		{
-			return false; // plaza
-		}
-		if (FVector::DistSquared2D(P, PadCenter) < 20000.0f * 20000.0f)
-		{
-			return false; // pad and its flame area
-		}
-		for (const FCapeBuilding& B : Buildings)
-		{
-			const FVector D = (P - B.Center).GetAbs();
-			if (D.X < B.Size.X * 0.5f + 900.0f && D.Y < B.Size.Y * 0.5f + 900.0f)
-			{
-				return false;
-			}
-		}
-		return true;
-	};
-
 	int32 Placed = 0;
 	for (int32 I = 0; I < TreeCount * 4 && Placed < TreeCount; ++I)
 	{
@@ -588,7 +637,7 @@ void ACapeCampus::BuildLandscape()
 			HashSigned(I, 23) * GroundSize.Y * 0.44f,
 			0.0f);
 
-		if (!IsClear(P))
+		if (!IsOpenGround(P))
 		{
 			continue;
 		}

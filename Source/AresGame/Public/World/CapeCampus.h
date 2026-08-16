@@ -24,6 +24,7 @@
 
 #include "CapeCampus.generated.h"
 
+class UHierarchicalInstancedStaticMeshComponent;
 class UInstancedStaticMeshComponent;
 class UMaterialInstanceDynamic;
 class UMaterialInterface;
@@ -205,6 +206,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
 	TObjectPtr<UInstancedStaticMeshComponent> Foliage;
 
+	/**
+	 * Ground cover — actual grass clumps, not a grass texture.
+	 *
+	 * Hierarchical, because this carries tens of thousands of instances and
+	 * needs the per-cluster culling a plain ISM does not do.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UHierarchicalInstancedStaticMeshComponent> GroundCover;
+
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	TArray<FCapeBuilding> Buildings;
 
@@ -261,6 +271,26 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape", meta = (ClampMin = "4"))
 	float GroundTileSizeM = 25.0f;
+
+	/**
+	 * How many ground-cover clumps to scatter. Only used once GroundCoverSlot
+	 * has a mesh. 30k covers the walkable campus convincingly; it is instanced,
+	 * so the cost is mostly in the cull pass rather than the draw.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape", meta = (ClampMin = "0"))
+	int32 GroundCoverCount = 30000;
+
+	/** Radius around the campus centre to scatter within, metres. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	float GroundCoverRadiusM = 700.0f;
+
+	/** Beyond this, clumps stop drawing. Grass is not worth a distant draw. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	float GroundCoverCullDistanceM = 120.0f;
+
+	/** Size of one clump, cm. Scaled per-instance by +/- 35% for variety. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	float GroundCoverSizeCm = 60.0f;
 
 	/** Bikes at the plaza rack, for the ride out to the pad. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
@@ -320,6 +350,18 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
 	FCapeMeshSlot CanopySlot;
 
+	/**
+	 * Grass clumps, flowers, small rocks — whatever should sit ON the ground
+	 * rather than be painted on it.
+	 *
+	 * A material makes the ground LOOK like grass; only geometry makes it grass.
+	 * Assign a Fab grass-clump mesh here. Nothing is scattered while this is
+	 * empty, because tens of thousands of grey cubes would be worse than bare
+	 * ground.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot GroundCoverSlot;
+
 	/** Skips canopy instances, for when TrunkSlot is a complete tree asset. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
 	bool bTrunkSlotIsWholeTree = false;
@@ -349,6 +391,12 @@ private:
 	 */
 	void AddTiledSurface(UInstancedStaticMeshComponent* Component, const FVector& Center,
 		const FVector2D& AreaSize, float Thickness, float TileSizeCm);
+
+	/** Scatters ground cover. No-op until GroundCoverSlot has a mesh. */
+	void BuildGroundCover();
+
+	/** True when a point is clear of roads, plaza, pad and buildings. */
+	bool IsOpenGround(const FVector& LocalPoint) const;
 
 	/** Bikes at the plaza. Spawned at BeginPlay alongside the terminals. */
 	void SpawnBikes();
