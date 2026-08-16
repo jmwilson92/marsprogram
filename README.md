@@ -149,6 +149,11 @@ that define headlessly.
 `TargetRules`, not `ModuleRules`; `bUseAVX` was superseded by `MinCpuArchX64`.
 Prefer omitting a build-tuning property over guessing its current name.
 
+**Declare the modules you actually call.** A transitive dependency may supply
+headers without supplying link symbols. `AresGame` calls `UUserWidget` directly,
+so it lists `UMG` itself rather than leaning on `AresUI` re-exporting it —
+otherwise the build compiles and then fails at link with LNK2019.
+
 **Close the editor before building.** Live Coding locks the binaries; the build
 fails and the editor keeps running stale DLLs, which presents as classes
 silently not existing (a flying `ADefaultPawn` instead of `AAresCharacter`).

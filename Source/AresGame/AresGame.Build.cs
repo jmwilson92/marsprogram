@@ -25,6 +25,11 @@ public class AresGame : ModuleRules
 			"EnhancedInput",
 			"AresCore",
 			"AresUI",
+			// AresGame calls UUserWidget directly (CreateWidget, AddToViewport),
+			// and AAresPlayerController exposes a TSubclassOf<UAresTerminalWidget>
+			// in its header. A module that uses an API declares it rather than
+			// relying on picking it up through AresUI.
+			"UMG",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]
