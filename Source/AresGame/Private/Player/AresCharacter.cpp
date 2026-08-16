@@ -9,6 +9,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 
+#include "Interaction/AresInteractionComponent.h"
 #include "Player/AresInputConfig.h"
 
 AAresCharacter::AAresCharacter()
@@ -22,6 +23,8 @@ AAresCharacter::AAresCharacter()
 	FirstPersonCamera->SetupAttachment(GetCapsuleComponent());
 	FirstPersonCamera->SetRelativeLocation(FVector(0.0f, 0.0f, EyeHeight));
 	FirstPersonCamera->bUsePawnControlRotation = true;
+
+	Interaction = CreateDefaultSubobject<UAresInteractionComponent>(TEXT("Interaction"));
 
 	// First person: the body yaws with the controller, and the camera owns pitch.
 	bUseControllerRotationYaw = true;
@@ -102,6 +105,8 @@ void AAresCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	Input->BindAction(InputConfig->SprintAction, ETriggerEvent::Started, this, &AAresCharacter::SprintStart);
 	Input->BindAction(InputConfig->SprintAction, ETriggerEvent::Completed, this, &AAresCharacter::SprintStop);
+
+	Input->BindAction(InputConfig->InteractAction, ETriggerEvent::Started, this, &AAresCharacter::Interact);
 }
 
 void AAresCharacter::Move(const FInputActionValue& Value)
@@ -128,6 +133,14 @@ void AAresCharacter::Look(const FInputActionValue& Value)
 	// Negated here rather than by an input modifier so the convention is
 	// visible at the point of use: mouse down should pitch the view down.
 	AddControllerPitchInput(-Axis.Y);
+}
+
+void AAresCharacter::Interact()
+{
+	if (Interaction)
+	{
+		Interaction->TryInteract();
+	}
 }
 
 void AAresCharacter::SprintStart()

@@ -16,6 +16,7 @@
 #include "AresCharacter.generated.h"
 
 class UAresInputConfig;
+class UAresInteractionComponent;
 class UCameraComponent;
 struct FInputActionValue;
 
@@ -29,8 +30,10 @@ public:
 
 	virtual void BeginPlay() override;
 
-	/** Eye-level camera. Slice 2 traces from here to find interactables. */
+	/** Eye-level camera. The interaction component traces from here. */
 	UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
+
+	UAresInteractionComponent* GetInteraction() const { return Interaction; }
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -39,6 +42,7 @@ protected:
 	void Look(const FInputActionValue& Value);
 	void SprintStart();
 	void SprintStop();
+	void Interact();
 
 	/** Creates the input config if it does not exist yet. Idempotent. */
 	void EnsureInputConfig();
@@ -51,6 +55,9 @@ protected:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UAresInputConfig> InputConfig;
+
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Player")
+	TObjectPtr<UAresInteractionComponent> Interaction;
 
 	/** Brisk walk, cm/s. The Cape is deliberately a place with distances. */
 	UPROPERTY(EditDefaultsOnly, Category = "Ares|Player")
