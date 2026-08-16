@@ -875,6 +875,363 @@
       }
     ]
   },
+  "program": {
+    "trace": [
+      {
+        "day": 1,
+        "earthDay": 1,
+        "remaining": 4199244000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 57.988,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 30,
+        "earthDay": 30,
+        "remaining": 4177320000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 57.639999999999986,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 90,
+        "earthDay": 90,
+        "remaining": 4131960000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 56.91999999999996,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 91,
+        "earthDay": 91,
+        "remaining": 5181204000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 56.90799999999996,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 92,
+        "earthDay": 92,
+        "remaining": 5180448000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 56.89599999999996,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 182,
+        "earthDay": 182,
+        "remaining": 6162408000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 55.81599999999992,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 0,
+        "milestones": [],
+        "windowIndex": 0
+      },
+      {
+        "day": 210,
+        "earthDay": 210,
+        "remaining": 6141240000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 55.479999999999905,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 273,
+        "earthDay": 273,
+        "remaining": 7143612000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 54.723999999999876,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 364,
+        "earthDay": 364,
+        "remaining": 8124816000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 53.631999999999834,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 365,
+        "earthDay": 365,
+        "remaining": 8124060000,
+        "annual": 4200000000,
+        "hoarded": false,
+        "support": 53.619999999999834,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 500,
+        "earthDay": 500,
+        "remaining": 8365980000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 50.61999999999972,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 728,
+        "earthDay": 728,
+        "remaining": 8400000000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 41.04399999999936,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 25,
+        "milestones": [
+          "window_1"
+        ],
+        "windowIndex": 1
+      },
+      {
+        "day": 990,
+        "earthDay": 990,
+        "remaining": 8339520000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 30.03999999999894,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 50,
+        "milestones": [
+          "window_1",
+          "window_2"
+        ],
+        "windowIndex": 2
+      },
+      {
+        "day": 1000,
+        "earthDay": 1000,
+        "remaining": 8331960000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 29.619999999998925,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 50,
+        "milestones": [
+          "window_1",
+          "window_2"
+        ],
+        "windowIndex": 2
+      },
+      {
+        "day": 1092,
+        "earthDay": 1092,
+        "remaining": 8400000000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 25.755999999998778,
+        "quartersUnderThreshold": 0,
+        "cancellation": null,
+        "researchPoints": 50,
+        "milestones": [
+          "window_1",
+          "window_2"
+        ],
+        "windowIndex": 2
+      },
+      {
+        "day": 1500,
+        "earthDay": 1500,
+        "remaining": 8366736000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 8.619999999998441,
+        "quartersUnderThreshold": 3,
+        "cancellation": null,
+        "researchPoints": 50,
+        "milestones": [
+          "window_1",
+          "window_2"
+        ],
+        "windowIndex": 2
+      },
+      {
+        "day": 1820,
+        "earthDay": 1820,
+        "remaining": 8400000000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 0,
+        "quartersUnderThreshold": 7,
+        "cancellation": "cancelled",
+        "researchPoints": 75,
+        "milestones": [
+          "window_1",
+          "window_2",
+          "window_3"
+        ],
+        "windowIndex": 3
+      },
+      {
+        "day": 1900,
+        "earthDay": 1900,
+        "remaining": 8339520000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 0,
+        "quartersUnderThreshold": 7,
+        "cancellation": "cancelled",
+        "researchPoints": 75,
+        "milestones": [
+          "window_1",
+          "window_2",
+          "window_3"
+        ],
+        "windowIndex": 3
+      },
+      {
+        "day": 2000,
+        "earthDay": 2000,
+        "remaining": 8332716000,
+        "annual": 4200000000,
+        "hoarded": true,
+        "support": 0,
+        "quartersUnderThreshold": 8,
+        "cancellation": "cancelled",
+        "researchPoints": 75,
+        "milestones": [
+          "window_1",
+          "window_2",
+          "window_3"
+        ],
+        "windowIndex": 3
+      }
+    ],
+    "opening": {
+      "DIRECTOR": {
+        "annual": 6000000000,
+        "remaining": 6000000000,
+        "support": 58,
+        "completedTech": [
+          "basic_eclss",
+          "optimus_deployment",
+          "starship_cargo",
+          "uncrewed_landing"
+        ],
+        "maturity": {
+          "basic_eclss": 0.7,
+          "optimus_deployment": 0.5,
+          "starship_cargo": 0.55,
+          "uncrewed_landing": 0.5
+        }
+      },
+      "ADMINISTRATOR": {
+        "annual": 4200000000,
+        "remaining": 4200000000,
+        "support": 58,
+        "completedTech": [
+          "basic_eclss",
+          "optimus_deployment",
+          "starship_cargo",
+          "uncrewed_landing"
+        ],
+        "maturity": {
+          "basic_eclss": 0.7,
+          "optimus_deployment": 0.5,
+          "starship_cargo": 0.55,
+          "uncrewed_landing": 0.5
+        }
+      },
+      "AUSTERITY": {
+        "annual": 2600000000,
+        "remaining": 2600000000,
+        "support": 58,
+        "completedTech": [
+          "basic_eclss",
+          "optimus_deployment",
+          "starship_cargo",
+          "uncrewed_landing"
+        ],
+        "maturity": {
+          "basic_eclss": 0.7,
+          "optimus_deployment": 0.5,
+          "starship_cargo": 0.55,
+          "uncrewed_landing": 0.5
+        }
+      },
+      "IRONMAN": {
+        "annual": 2200000000,
+        "remaining": 2200000000,
+        "support": 58,
+        "completedTech": [
+          "basic_eclss",
+          "optimus_deployment",
+          "starship_cargo",
+          "uncrewed_landing"
+        ],
+        "maturity": {
+          "basic_eclss": 0.7,
+          "optimus_deployment": 0.5,
+          "starship_cargo": 0.55,
+          "uncrewed_landing": 0.5
+        }
+      }
+    }
+  },
   "rng": {
     "streamNames": [
       "edl",

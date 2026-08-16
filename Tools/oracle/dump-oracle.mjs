@@ -33,6 +33,11 @@ const OUT = resolve(argValue('--out', new URL('./oracle.json', import.meta.url).
 const mod = (p) => import(pathToFileURL(resolve(REF, p)).href);
 
 const clockMod = await mod('src/core/clock.js');
+const stateMod = await mod('src/core/state.js');
+const loaderMod = await mod('src/core/loader.js');
+const economyMod = await mod('src/sim/economy.js');
+const politicsMod = await mod('src/sim/politics.js');
+const researchMod = await mod('src/sim/research.js');
 const rngMod = await mod('src/core/rng.js');
 const mathMod = await mod('src/util/math.js');
 const constMod = await mod('src/core/constants.js');
@@ -202,6 +207,77 @@ const rngSerialization = (() => {
   return { before, after, afterRestore, serialized: blob };
 })();
 
+/* ------------------------------------------------- program systems (M2) */
+
+/**
+ * Runs the reference's economy, politics and research ticks for 2000 program
+ * days and samples them. The tick ORDER matters and is taken from
+ * src/sim/pipeline.js TICK_PHASES: clock, then research, then economy, then
+ * politics. Only the systems AresCore actually ports are run — pulling in the
+ * whole pipeline would drag fleet and planning into the trace and the C++ side
+ * would diverge for reasons that have nothing to do with these three systems.
+ */
+const programTrace = [];
+{
+  const data = await loaderMod.loadData();
+  const state = stateMod.createInitialState(0xA11CE5, 'ADMINISTRATOR');
+  stateMod.bindRng(state);
+  loaderMod.applyDataToState(state, data);
+
+  const SAMPLES = new Set([
+    1, 30, 90, 91, 92, 182, 210, 273, 364, 365, 500, 728, 990, 1000,
+    1092, 1500, 1820, 1900, 2000,
+  ]);
+
+  for (let day = 1; day <= 2000; day++) {
+    // --- clock phase
+    const advanced = clockMod.advance(state);
+    if (advanced.windowOpened) {
+      researchMod.awardRp(state, `window_${state.clock.windowIndex}`, 25, 'TRANSFER WINDOW');
+    }
+    // --- research phase (labs only; parkLab/restockLab need fleet + planning)
+    researchMod.tickLabs(state);
+    // --- economy phase
+    economyMod.tickEconomy(state);
+    // --- politics phase
+    politicsMod.tickPolitics(state);
+
+    if (SAMPLES.has(day)) {
+      programTrace.push({
+        day,
+        earthDay: state.clock.earthDay,
+        remaining: state.earth.budget.remaining,
+        annual: state.earth.budget.annual,
+        hoarded: Boolean(state.earth.budget.hoarded),
+        support: state.earth.politics.support,
+        quartersUnderThreshold: state.earth.politics.quartersUnderThreshold ?? 0,
+        cancellation: state.earth.politics.cancellation ?? null,
+        researchPoints: state.earth.research.points,
+        milestones: [...state.earth.research.milestones],
+        windowIndex: state.clock.windowIndex,
+      });
+    }
+  }
+}
+
+/** Opening values for each difficulty, straight from balance.json. */
+const openingState = {};
+{
+  const data = await loaderMod.loadData();
+  for (const difficulty of ['DIRECTOR', 'ADMINISTRATOR', 'AUSTERITY', 'IRONMAN']) {
+    const s = stateMod.createInitialState(1, difficulty);
+    loaderMod.applyDataToState(s, data);
+    openingState[difficulty] = {
+      annual: s.earth.budget.annual,
+      remaining: s.earth.budget.remaining,
+      support: s.earth.politics.support,
+      completedTech: [...s.earth.research.completed].sort(),
+      maturity: Object.fromEntries(
+        Object.entries(s.earth.research.maturity).sort(([a], [b]) => a.localeCompare(b))),
+    };
+  }
+}
+
 /* ------------------------------------------------------------------- output */
 
 const oracle = {
@@ -216,6 +292,10 @@ const oracle = {
     solTrace,
     earthDate: dateCases,
     season: seasonCases,
+  },
+  program: {
+    trace: programTrace,
+    opening: openingState,
   },
   rng: {
     streamNames: rngStreamNames,

@@ -65,6 +65,8 @@ struct FBudgetState
 	std::vector<FLedgerEntry> Ledger;
 	/** Set when reserves exceed 2x annual; politics reads it as a hoarding penalty. */
 	bool bHoarded = false;
+	/** Guards against double-charging ops when a day is ticked more than once. */
+	int64_t LastOpsDay = -1;
 };
 
 /* ---------------------------------------------------------------- politics */
@@ -76,6 +78,8 @@ struct FPoliticsState
 	std::string Administration;
 	std::string Mandate;
 	int32_t QuartersUnderThreshold = 0;
+	/** Same one-tick-per-day guard as the budget's. */
+	int64_t LastDay = -1;
 	bool bCancelled = false;
 	std::string CancellationReason;
 };
@@ -90,6 +94,25 @@ struct FResearchActive
 	FReal PointsCommitted = 0.0;
 };
 
+/**
+ * A LEO laboratory. Brief §7: RP is earned by flying, and a lab in orbit is the
+ * one standing source of it. Crewed labs out-produce robotic ones and can
+ * starve; Optimus labs cannot.
+ */
+struct FLeoLab
+{
+	std::string Id;
+	std::string MissionId;
+	std::string ShipId;
+	int32_t Robots = 0;
+	int32_t Crew = 0;
+	FReal FoodKg = 0.0;
+	FReal WaterKg = 0.0;
+	FReal AirDays = 0.0;
+	FReal RpPerDay = 0.0;
+	bool bOffline = false;
+};
+
 struct FResearchState
 {
 	FReal Points = 0.0;
@@ -100,6 +123,7 @@ struct FResearchState
 	std::map<std::string, FReal> Maturity;
 	/** Flown milestones already awarded, so RP is never double-paid. */
 	std::vector<std::string> Milestones;
+	std::vector<FLeoLab> Labs;
 };
 
 /* ------------------------------------------------------------------- fleet */

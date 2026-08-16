@@ -154,6 +154,21 @@ FProgramState MakeProgramState(const FAresData& Data, uint32_t Seed, const std::
 	State.Politics.bCancelled = false;
 
 	State.Research.Points = 0.0;
+
+	// Starter tech, mirroring the reference's applyDataToState: rows flagged
+	// startCompleted are already researched, and carry their starting maturity.
+	// Maturity is what scales EDL success between balance.json's earlySuccess
+	// and matureSuccess, so a fresh program is not flying blind.
+	for (const FTechRow& Row : Data.Tech)
+	{
+		if (!Row.bStartCompleted)
+		{
+			continue;
+		}
+		State.Research.Completed.push_back(Row.Id);
+		State.Research.Maturity[Row.Id] = Row.StartingMaturity;
+	}
+
 	State.Colony.bLifeSupportPowered = true;
 
 	return State;
