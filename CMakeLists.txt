@@ -55,6 +55,24 @@ endif()
 
 target_compile_options(AresCore PRIVATE ${ARES_WARNINGS})
 
+# Mimic what UBT does to the export macro.
+#
+# UBT compiles AresCore with -DARESCORE_API=DLLEXPORT (and consumers with
+# =DLLIMPORT). The plain headless build leaves ARESCORE_API undefined, so it
+# cannot tell whether AresApi.h resolves DLLEXPORT correctly — which is exactly
+# how a build that was green here still failed under MSVC with "missing type
+# specifier - int assumed" on every exported declaration.
+#
+# Enabling this reproduces UBT's define locally:
+#   cmake -S . -B build-api -DARES_SIMULATE_UBT_API=ON
+option(ARES_SIMULATE_UBT_API
+  "Define ARESCORE_API=DLLEXPORT as UnrealBuildTool does, to verify AresApi.h" OFF)
+
+if(ARES_SIMULATE_UBT_API)
+  target_compile_definitions(AresCore PUBLIC ARESCORE_API=DLLEXPORT)
+  message(STATUS "AresCore: simulating UBT export macro (ARESCORE_API=DLLEXPORT)")
+endif()
+
 # ------------------------------------------------------------------- tests ---
 
 file(GLOB ARES_TEST_SOURCES CONFIGURE_DEPENDS Tests/*.cpp Tests/Harness/*.cpp)

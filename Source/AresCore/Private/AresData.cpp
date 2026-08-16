@@ -25,40 +25,40 @@ bool FAresData::LoadBalance(const FJsonValue& Root, FAresData& Out, std::string&
 
 	Out.Version = Root["version"].AsString();
 
-	const FJsonValue& Time = Root["time"];
-	Out.Time.SolSeconds = Time["solSeconds"].RequireNumber("time.solSeconds", OutError);
-	Out.Time.EarthDaySeconds = Time["earthDaySeconds"].RequireNumber("time.earthDaySeconds", OutError);
-	Out.Time.MarsYearSols = Time["marsYearSols"].RequireNumber("time.marsYearSols", OutError);
-	Out.Time.MarsYearEarthDays = Time["marsYearEarthDays"].RequireNumber("time.marsYearEarthDays", OutError);
-	Out.Time.SynodicEarthDays = Time["synodicEarthDays"].RequireNumber("time.synodicEarthDays", OutError);
-	Out.Time.FirstWindowEarthDay = Time["firstWindowEarthDay"].RequireNumber("time.firstWindowEarthDay", OutError);
+	const FJsonValue& TimeJson = Root["time"];
+	Out.Time.SolSeconds = TimeJson["solSeconds"].RequireNumber("time.solSeconds", OutError);
+	Out.Time.EarthDaySeconds = TimeJson["earthDaySeconds"].RequireNumber("time.earthDaySeconds", OutError);
+	Out.Time.MarsYearSols = TimeJson["marsYearSols"].RequireNumber("time.marsYearSols", OutError);
+	Out.Time.MarsYearEarthDays = TimeJson["marsYearEarthDays"].RequireNumber("time.marsYearEarthDays", OutError);
+	Out.Time.SynodicEarthDays = TimeJson["synodicEarthDays"].RequireNumber("time.synodicEarthDays", OutError);
+	Out.Time.FirstWindowEarthDay = TimeJson["firstWindowEarthDay"].RequireNumber("time.firstWindowEarthDay", OutError);
 
-	const FJsonValue& Orbit = Root["orbit"];
-	Out.Orbit.Eccentricity = Orbit["eccentricity"].RequireNumber("orbit.eccentricity", OutError);
-	Out.Orbit.AxialTiltDeg = Orbit["axialTiltDeg"].RequireNumber("orbit.axialTiltDeg", OutError);
-	Out.Orbit.LsPerihelionDeg = Orbit["lsPerihelionDeg"].RequireNumber("orbit.lsPerihelionDeg", OutError);
-	Out.Orbit.SolarConstantMeanWm2 = Orbit["solarConstantMean_wm2"].RequireNumber("orbit.solarConstantMean_wm2", OutError);
-	Out.Orbit.GravityMps2 = Orbit["gravity_mps2"].RequireNumber("orbit.gravity_mps2", OutError);
-	Out.Orbit.RadiusKm = Orbit["radius_km"].RequireNumber("orbit.radius_km", OutError);
-	Out.Orbit.SurfacePressurePa = Orbit["surfacePressure_pa"].RequireNumber("orbit.surfacePressure_pa", OutError);
+	const FJsonValue& OrbitJson = Root["orbit"];
+	Out.Orbit.Eccentricity = OrbitJson["eccentricity"].RequireNumber("orbit.eccentricity", OutError);
+	Out.Orbit.AxialTiltDeg = OrbitJson["axialTiltDeg"].RequireNumber("orbit.axialTiltDeg", OutError);
+	Out.Orbit.LsPerihelionDeg = OrbitJson["lsPerihelionDeg"].RequireNumber("orbit.lsPerihelionDeg", OutError);
+	Out.Orbit.SolarConstantMeanWm2 = OrbitJson["solarConstantMean_wm2"].RequireNumber("orbit.solarConstantMean_wm2", OutError);
+	Out.Orbit.GravityMps2 = OrbitJson["gravity_mps2"].RequireNumber("orbit.gravity_mps2", OutError);
+	Out.Orbit.RadiusKm = OrbitJson["radius_km"].RequireNumber("orbit.radius_km", OutError);
+	Out.Orbit.SurfacePressurePa = OrbitJson["surfacePressure_pa"].RequireNumber("orbit.surfacePressure_pa", OutError);
 
-	const FJsonValue& Economy = Root["economy"];
-	const FJsonValue& Starting = Economy["startingAnnual"];
+	const FJsonValue& EconomyJson = Root["economy"];
+	const FJsonValue& Starting = EconomyJson["startingAnnual"];
 	Out.Economy.StartingAnnualDirector = Starting["DIRECTOR"].RequireNumber("economy.startingAnnual.DIRECTOR", OutError);
 	Out.Economy.StartingAnnualAdministrator = Starting["ADMINISTRATOR"].RequireNumber("economy.startingAnnual.ADMINISTRATOR", OutError);
 	Out.Economy.StartingAnnualAusterity = Starting["AUSTERITY"].RequireNumber("economy.startingAnnual.AUSTERITY", OutError);
 	Out.Economy.StartingAnnualIronman = Starting["IRONMAN"].RequireNumber("economy.startingAnnual.IRONMAN", OutError);
-	Out.Economy.StartingSupport = Economy["startingSupport"].RequireNumber("economy.startingSupport", OutError);
-	Out.Economy.StarshipLaunchUsd = Economy["starshipLaunch_usd"].RequireNumber("economy.starshipLaunch_usd", OutError);
-	Out.Economy.BoosterRefuelUsd = Economy["boosterRefuel_usd"].RequireNumber("economy.boosterRefuel_usd", OutError);
-	Out.Economy.StarshipPayloadKg = Economy["starshipPayload_kg"].RequireNumber("economy.starshipPayload_kg", OutError);
-	Out.Economy.StarshipPayloadM3 = Economy["starshipPayload_m3"].RequireNumber("economy.starshipPayload_m3", OutError);
-	Out.Economy.RpBuyUsd = Economy["rpBuy_usd"].RequireNumber("economy.rpBuy_usd", OutError);
+	Out.Economy.StartingSupport = EconomyJson["startingSupport"].RequireNumber("economy.startingSupport", OutError);
+	Out.Economy.StarshipLaunchUsd = EconomyJson["starshipLaunch_usd"].RequireNumber("economy.starshipLaunch_usd", OutError);
+	Out.Economy.BoosterRefuelUsd = EconomyJson["boosterRefuel_usd"].RequireNumber("economy.boosterRefuel_usd", OutError);
+	Out.Economy.StarshipPayloadKg = EconomyJson["starshipPayload_kg"].RequireNumber("economy.starshipPayload_kg", OutError);
+	Out.Economy.StarshipPayloadM3 = EconomyJson["starshipPayload_m3"].RequireNumber("economy.starshipPayload_m3", OutError);
+	Out.Economy.RpBuyUsd = EconomyJson["rpBuy_usd"].RequireNumber("economy.rpBuy_usd", OutError);
 
-	const FJsonValue& Edl = Root["edl"];
-	Out.Edl.EarlySuccess = Edl["earlySuccess"].RequireNumber("edl.earlySuccess", OutError);
-	Out.Edl.MatureSuccess = Edl["matureSuccess"].RequireNumber("edl.matureSuccess", OutError);
-	const FJsonValue& Stages = Edl["stages"];
+	const FJsonValue& EdlJson = Root["edl"];
+	Out.Edl.EarlySuccess = EdlJson["earlySuccess"].RequireNumber("edl.earlySuccess", OutError);
+	Out.Edl.MatureSuccess = EdlJson["matureSuccess"].RequireNumber("edl.matureSuccess", OutError);
+	const FJsonValue& Stages = EdlJson["stages"];
 	if (!Stages.IsArray() || Stages.Num() == 0)
 	{
 		if (OutError.empty()) { OutError = "balance.json: edl.stages must be a non-empty array"; }
@@ -89,11 +89,11 @@ bool FAresData::LoadBalance(const FJsonValue& Root, FAresData& Out, std::string&
 	Out.DeltaV.SurfaceToLlo = Dv["surfaceToLlo"].AsNumber(0.0);
 	Out.DeltaV.LloToTei = Dv["lloToTei"].AsNumber(0.0);
 
-	const FJsonValue& Cabin = Root["cabin"];
-	Out.Cabin.InnerRadiusM = Cabin["innerRadius_m"].RequireNumber("cabin.innerRadius_m", OutError);
-	Out.Cabin.DeckHeightM = Cabin["deckHeight_m"].RequireNumber("cabin.deckHeight_m", OutError);
-	Out.Cabin.Decks = static_cast<int32_t>(Cabin["decks"].RequireNumber("cabin.decks", OutError));
-	Out.Cabin.Seats = static_cast<int32_t>(Cabin["seats"].RequireNumber("cabin.seats", OutError));
+	const FJsonValue& CabinJson = Root["cabin"];
+	Out.Cabin.InnerRadiusM = CabinJson["innerRadius_m"].RequireNumber("cabin.innerRadius_m", OutError);
+	Out.Cabin.DeckHeightM = CabinJson["deckHeight_m"].RequireNumber("cabin.deckHeight_m", OutError);
+	Out.Cabin.Decks = static_cast<int32_t>(CabinJson["decks"].RequireNumber("cabin.decks", OutError));
+	Out.Cabin.Seats = static_cast<int32_t>(CabinJson["seats"].RequireNumber("cabin.seats", OutError));
 
 	if (!OutError.empty())
 	{
