@@ -266,6 +266,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	int32 BikeCount = 4;
 
+	/**
+	 * Spawns an ACapeSky at play time if the level has none.
+	 *
+	 * A level without a sky is unlit and unusable, and losing the placed actor
+	 * to an unsaved crash should not cost a session. Placing one by hand still
+	 * wins — this only fills a gap.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bEnsureSky = true;
+
 	/* ----------------------------------------------------------------------
 	 * Art slots.
 	 *
@@ -342,6 +352,9 @@ private:
 
 	/** Bikes at the plaza. Spawned at BeginPlay alongside the terminals. */
 	void SpawnBikes();
+
+	/** Spawns a sky if the level has none. No-op when one already exists. */
+	void EnsureSkyExists();
 
 	/**
 	 * Points an instanced component at a slot's mesh and material, falling back

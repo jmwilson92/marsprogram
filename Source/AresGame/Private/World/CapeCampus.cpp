@@ -7,7 +7,10 @@
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 
+#include "EngineUtils.h"
+
 #include "World/AresTerminal.h"
+#include "World/CapeSky.h"
 
 namespace
 {
@@ -472,6 +475,7 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 void ACapeCampus::BeginPlay()
 {
 	Super::BeginPlay();
+	EnsureSkyExists();
 	SpawnTerminals();
 	SpawnBikes();
 }
@@ -552,4 +556,31 @@ void ACapeCampus::SpawnTerminals()
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("CapeCampus: spawned %d terminal(s)."), Spawned);
+}
+
+void ACapeCampus::EnsureSkyExists()
+{
+	UWorld* World = GetWorld();
+	if (!World || !bEnsureSky)
+	{
+		return;
+	}
+
+	// A hand-placed sky always wins; this only covers the case where there is
+	// none, which otherwise presents as a black unlit campus and looks like a
+	// far worse bug than a missing actor.
+	for (TActorIterator<ACapeSky> It(World); It; ++It)
+	{
+		return;
+	}
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	World->SpawnActor<ACapeSky>(ACapeSky::StaticClass(),
+		GetActorLocation() + FVector(0.0f, 0.0f, 10000.0f), FRotator::ZeroRotator, Params);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("CapeCampus: no ACapeSky in the level, spawned one. Place one and SAVE to keep it."));
 }
