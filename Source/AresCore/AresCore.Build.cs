@@ -26,7 +26,7 @@ public class AresCore : ModuleRules
 		// The sources are plain C++ with no UE headers, so a shared PCH would
 		// only slow this down, and unity builds would hide missing includes.
 		PCHUsage = PCHUsageMode.NoPCHs;
-		bUseUnity = false;
+		bUseUnityBuild = false;
 
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
@@ -39,14 +39,15 @@ public class AresCore : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		// Determinism: the simulation must produce identical results from
-		// identical seeds, so the compiler may not reassociate floating-point
-		// work in the clock or the Kepler solver.
-		bUseAVX = false;
-		if (Target.Platform == UnrealTargetPlatform.Win64)
-		{
-			// /fp:precise is MSVC's default, set explicitly so a future global
-			// toolchain change cannot silently relax it for this module.
-			PrivateDefinitions.Add("ARES_STRICT_FP=1");
-		}
+		// identical seeds, so the compiler must not reassociate floating-point
+		// work in the clock or the Kepler solver. MSVC's /fp:precise and
+		// Clang's default -ffp-contract=on-per-statement are both acceptable;
+		// what matters is that nothing enables fast-math for this module.
+		//
+		// Deliberately NOT setting bUseAVX here: that property was deprecated
+		// in favour of MinCpuArchX64 and its availability varies by engine
+		// version. If you later need to pin the ISA for cross-machine
+		// reproducibility, use MinCpuArchX64 rather than reviving bUseAVX.
+		PrivateDefinitions.Add("ARES_STRICT_FP=1");
 	}
 }

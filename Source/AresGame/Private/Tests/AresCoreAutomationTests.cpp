@@ -15,9 +15,11 @@
 
 #include "Misc/AutomationTest.h"
 
+#include "Containers/StringConv.h"
 #include "HAL/PlatformFileManager.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 #include "AresCore/AresData.h"
 #include "AresCore/AresJson.h"
@@ -26,6 +28,20 @@
 #include "AresCore/SimClock.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
+
+/**
+ * UE 5.5 turned EAutomationTestFlags into an enum class and moved the composite
+ * masks out to file-scope constants (EAutomationTestFlags_ApplicationContextMask),
+ * because an enum class cannot hold OR-ed combinations. Guarding here keeps this
+ * file building on either side of that change.
+ */
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 5)
+	#define ARES_AUTOMATION_FLAGS \
+		(EAutomationTestFlags_ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+#else
+	#define ARES_AUTOMATION_FLAGS \
+		(EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+#endif
 
 namespace
 {
@@ -67,7 +83,7 @@ bool LoadBalance(Ares::FAresData& OutData, FString& OutError)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FAresCoreClockTest,
 	"Ares.Core.Clock",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+	ARES_AUTOMATION_FLAGS)
 
 bool FAresCoreClockTest::RunTest(const FString& Parameters)
 {
@@ -113,7 +129,7 @@ bool FAresCoreClockTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FAresCoreRngTest,
 	"Ares.Core.Rng",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+	ARES_AUTOMATION_FLAGS)
 
 bool FAresCoreRngTest::RunTest(const FString& Parameters)
 {
@@ -152,7 +168,7 @@ bool FAresCoreRngTest::RunTest(const FString& Parameters)
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 	FAresCoreDeterminismTest,
 	"Ares.Core.Determinism",
-	EAutomationTestFlags::ApplicationContextMask | EAutomationTestFlags::EngineFilter)
+	ARES_AUTOMATION_FLAGS)
 
 bool FAresCoreDeterminismTest::RunTest(const FString& Parameters)
 {
