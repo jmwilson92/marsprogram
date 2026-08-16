@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "AresCore/AresApi.h"
+
 namespace Ares
 {
 
@@ -39,26 +41,26 @@ public:
 	uint32_t GetRootSeed() const { return RootSeed; }
 
 	/** Formats the seed the way the UI shows it: 8 uppercase hex digits. */
-	static std::string FormatSeed(uint32_t Seed);
+	static ARESCORE_API std::string FormatSeed(uint32_t Seed);
 
 	/**
 	 * Derives a stream's seed from the root. Streams are created lazily on first
 	 * use, exactly as the reference does, so adding a new stream later cannot
 	 * shift the sequence of any existing one.
 	 */
-	static uint32_t DeriveStreamSeed(uint32_t RootSeed, const std::string& Name);
+	static ARESCORE_API uint32_t DeriveStreamSeed(uint32_t RootSeed, const std::string& Name);
 
 	/** Uniform double in [0, 1). */
-	double Next(const std::string& StreamName);
+	ARESCORE_API double Next(const std::string& StreamName);
 
 	/** Uniform double in [Min, Max). */
-	double Float(const std::string& StreamName, double Min = 0.0, double Max = 1.0);
+	ARESCORE_API double Float(const std::string& StreamName, double Min = 0.0, double Max = 1.0);
 
 	/** Uniform integer in [Min, Max], inclusive on both ends. */
-	int64_t Int(const std::string& StreamName, double Min, double Max);
+	ARESCORE_API int64_t Int(const std::string& StreamName, double Min, double Max);
 
 	/** True with probability P. */
-	bool Chance(const std::string& StreamName, double P);
+	ARESCORE_API bool Chance(const std::string& StreamName, double P);
 
 	/** Uniform pick. Returns Fallback when Items is empty. */
 	template <typename T>
@@ -72,15 +74,15 @@ public:
 		return Items[static_cast<size_t>(Index)];
 	}
 
-	uint64_t GetCounter(const std::string& StreamName) const;
-	bool HasStream(const std::string& StreamName) const;
+	ARESCORE_API uint64_t GetCounter(const std::string& StreamName) const;
+	ARESCORE_API bool HasStream(const std::string& StreamName) const;
 
 	/** Round-trips through save/load. Restoring resumes the identical sequence. */
-	std::map<std::string, FRngStreamState> Serialize() const;
-	static FAresRng Deserialize(uint32_t InRootSeed, const std::map<std::string, FRngStreamState>& InStreams);
+	ARESCORE_API std::map<std::string, FRngStreamState> Serialize() const;
+	static ARESCORE_API FAresRng Deserialize(uint32_t InRootSeed, const std::map<std::string, FRngStreamState>& InStreams);
 
 private:
-	FRngStreamState& StreamFor(const std::string& Name);
+	FRngStreamState& StreamFor(const std::string& Name); // private: not exported
 
 	uint32_t RootSeed = 0;
 	std::map<std::string, FRngStreamState> Streams;

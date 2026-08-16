@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+#include "AresCore/AresApi.h"
 #include "AresCore/AresMath.h"
 
 namespace Ares
@@ -62,7 +63,7 @@ struct FEconomyBalance
 	FReal RpBuyUsd = 0.0;
 
 	/** Difficulty key as spelled in balance.json: DIRECTOR/ADMINISTRATOR/AUSTERITY/IRONMAN. */
-	FReal StartingAnnualFor(const std::string& Difficulty) const;
+	ARESCORE_API FReal StartingAnnualFor(const std::string& Difficulty) const;
 };
 
 /** balance.json -> "edl" */
@@ -130,8 +131,8 @@ struct FAresData
 	 * required field is missing — content problems must fail at load, not
 	 * silently balance the game to zero.
 	 */
-	static bool LoadBalance(const FJsonValue& Root, FAresData& Out, std::string& OutError);
-	static bool LoadBalanceFile(const std::string& Path, FAresData& Out, std::string& OutError);
+	static ARESCORE_API bool LoadBalance(const FJsonValue& Root, FAresData& Out, std::string& OutError);
+	static ARESCORE_API bool LoadBalanceFile(const std::string& Path, FAresData& Out, std::string& OutError);
 };
 
 } // namespace Ares

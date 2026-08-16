@@ -11,6 +11,8 @@
 
 #include <cmath>
 
+#include "AresCore/AresApi.h"
+
 namespace Ares
 {
 /** Program math runs in double throughout; §3.3's astro frame needs the range. */
@@ -61,13 +63,13 @@ inline FReal WrapRadPi(FReal A)
  * tan(nu/2) is undefined at 180 deg; the perihelion-frame Mars never sits
  * exactly there at Ls0, which is the only call site in the clock.
  */
-FReal TrueToMeanAnomaly(FReal NuDeg, FReal Ecc);
+ARESCORE_API FReal TrueToMeanAnomaly(FReal NuDeg, FReal Ecc);
 
 /**
  * Kepler: mean anomaly (deg) -> true anomaly (deg).
  * Newton iteration on the eccentric anomaly, 12 steps max, 1e-14 convergence —
  * identical iteration count and tolerance to the reference so results agree.
  */
-FReal MeanToTrueAnomaly(FReal MDeg, FReal Ecc);
+ARESCORE_API FReal MeanToTrueAnomaly(FReal MDeg, FReal Ecc);
 
 } // namespace Ares

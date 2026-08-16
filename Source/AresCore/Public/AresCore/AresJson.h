@@ -18,6 +18,8 @@
 #include <string>
 #include <vector>
 
+#include "AresCore/AresApi.h"
+
 namespace Ares
 {
 
@@ -43,16 +45,16 @@ public:
 	bool IsArray() const { return TypeValue == EJsonType::Array; }
 
 	/** Object member lookup. Returns a static null value when absent — never throws. */
-	const FJsonValue& operator[](const std::string& Key) const;
+	ARESCORE_API const FJsonValue& operator[](const std::string& Key) const;
 	/** Array element lookup. Returns a static null value when out of range. */
-	const FJsonValue& operator[](size_t Index) const;
+	ARESCORE_API const FJsonValue& operator[](size_t Index) const;
 
-	size_t Num() const;
-	bool HasField(const std::string& Key) const;
+	ARESCORE_API size_t Num() const;
+	ARESCORE_API bool HasField(const std::string& Key) const;
 
-	double AsNumber(double Fallback = 0.0) const;
-	bool AsBool(bool Fallback = false) const;
-	const std::string& AsString() const;
+	ARESCORE_API double AsNumber(double Fallback = 0.0) const;
+	ARESCORE_API bool AsBool(bool Fallback = false) const;
+	ARESCORE_API const std::string& AsString() const;
 
 	const std::vector<FJsonValue>& AsArray() const { return Elements; }
 	const std::map<std::string, FJsonValue>& AsObject() const { return Members; }
@@ -62,7 +64,7 @@ public:
 	 * is missing or not a number, so a malformed data file fails loudly at load
 	 * instead of silently balancing the game to zero.
 	 */
-	double RequireNumber(const std::string& Path, std::string& OutError, double Fallback = 0.0) const;
+	ARESCORE_API double RequireNumber(const std::string& Path, std::string& OutError, double Fallback = 0.0) const;
 
 private:
 	friend class FJsonParser;
@@ -76,9 +78,9 @@ private:
 };
 
 /** Parses JSON text. On failure returns false and fills OutError with a line/column. */
-bool ParseJson(const std::string& Text, FJsonValue& OutValue, std::string& OutError);
+ARESCORE_API bool ParseJson(const std::string& Text, FJsonValue& OutValue, std::string& OutError);
 
 /** Reads a file from disk and parses it. Convenience for headless tests and tools. */
-bool ParseJsonFile(const std::string& Path, FJsonValue& OutValue, std::string& OutError);
+ARESCORE_API bool ParseJsonFile(const std::string& Path, FJsonValue& OutValue, std::string& OutError);
 
 } // namespace Ares

@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 
+#include "AresCore/AresApi.h"
 #include "AresCore/AresMath.h"
 #include "AresCore/AresRng.h"
 #include "AresCore/SimClock.h"
@@ -244,7 +245,7 @@ struct FProgramState
  * Builds the opening state: clock at day 0, RNG seeded, budget and support
  * taken from balance.json for the chosen difficulty.
  */
-FProgramState MakeProgramState(const FAresData& Data, uint32_t Seed,
+ARESCORE_API FProgramState MakeProgramState(const FAresData& Data, uint32_t Seed,
 	const std::string& Difficulty = DIFFICULTY_ADMINISTRATOR);
 
 /**
@@ -253,6 +254,6 @@ FProgramState MakeProgramState(const FAresData& Data, uint32_t Seed,
  * seed and asserts identical hashes. Doubles are hashed by their exact bit
  * pattern, so any drift shows up rather than being rounded away.
  */
-uint64_t HashProgramState(const FProgramState& State);
+ARESCORE_API uint64_t HashProgramState(const FProgramState& State);
 
 } // namespace Ares

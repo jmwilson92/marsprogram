@@ -14,6 +14,7 @@
 #include <cstdint>
 #include <string>
 
+#include "AresCore/AresApi.h"
 #include "AresCore/AresConstants.h"
 #include "AresCore/AresMath.h"
 
@@ -30,7 +31,7 @@ struct FEarthDate
 	uint32_t Day = 0;
 
 	/** ISO YYYY-MM-DD. */
-	std::string ToIso() const;
+	ARESCORE_API std::string ToIso() const;
 };
 
 struct FSimClock
@@ -66,41 +67,41 @@ struct FClockAdvanceResult
 };
 
 /** Days between two proleptic Gregorian civil dates. Exact integer arithmetic. */
-int64_t DaysFromCivil(int32_t Year, uint32_t Month, uint32_t Day);
-FEarthDate CivilFromDays(int64_t Days);
+ARESCORE_API int64_t DaysFromCivil(int32_t Year, uint32_t Month, uint32_t Day);
+ARESCORE_API FEarthDate CivilFromDays(int64_t Days);
 
 /** Builds a clock at program day 0 with all derived fields populated. */
-FSimClock MakeClock(const FAresData& Data);
+ARESCORE_API FSimClock MakeClock(const FAresData& Data);
 
 /** Recomputes Mars year / Ls / insolation / window countdown from EarthDay. */
-void RefreshDerived(FSimClock& Clock, const FAresData& Data);
+ARESCORE_API void RefreshDerived(FSimClock& Clock, const FAresData& Data);
 
 /** Advances exactly one tick in the clock's current tick unit. */
-FClockAdvanceResult Advance(FSimClock& Clock, const FAresData& Data);
+ARESCORE_API FClockAdvanceResult Advance(FSimClock& Clock, const FAresData& Data);
 
 /**
  * Returns a copy advanced by ExtraTicks without consuming transfer windows.
  * Used for smooth UI interpolation between simulation ticks — it must never
  * mutate program state, which is why it returns a value.
  */
-FSimClock InterpolateClock(const FSimClock& Clock, const FAresData& Data, FReal ExtraTicks);
+ARESCORE_API FSimClock InterpolateClock(const FSimClock& Clock, const FAresData& Data, FReal ExtraTicks);
 
-FEarthDate EarthDateFromDay(FReal EarthDay);
-std::string FormatEarthDate(FReal EarthDay);
+ARESCORE_API FEarthDate EarthDateFromDay(FReal EarthDay);
+ARESCORE_API std::string FormatEarthDate(FReal EarthDay);
 
 /** Mars season name for a solar longitude, northern-hemisphere referenced. */
-std::string SeasonName(FReal Ls);
+ARESCORE_API std::string SeasonName(FReal Ls);
 
 /** Insolation scale factor at a given Ls: (1/r)^2 in units of the semi-major axis. */
-FReal OrbitalDistanceFactor(FReal Ls, const FAresData& Data);
+ARESCORE_API FReal OrbitalDistanceFactor(FReal Ls, const FAresData& Data);
 
 /** Mean anomaly at Ls = 0, derived from the orbit balance. */
-FReal MeanAnomalyAtLs0(const FAresData& Data);
+ARESCORE_API FReal MeanAnomalyAtLs0(const FAresData& Data);
 
 /** Earth days between the MY46 Ls=0 pin and the program epoch. */
-FReal EarthDaysLs0ToEpoch();
+ARESCORE_API FReal EarthDaysLs0ToEpoch();
 
 /** Program years elapsed, Julian year. Mirrors the reference's programYear(). */
-FReal ProgramYear(FReal EarthDay);
+ARESCORE_API FReal ProgramYear(FReal EarthDay);
 
 } // namespace Ares
