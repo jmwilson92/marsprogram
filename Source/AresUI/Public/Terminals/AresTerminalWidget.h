@@ -53,10 +53,10 @@ public:
 	FOnTerminalCloseRequested OnCloseRequested;
 
 	/** Headline for a kind, e.g. "FLIGHT DIRECTOR". */
-	static FText GetTitleFor(ETerminalKind Kind);
+	static FText GetTitleFor(ETerminalKind InKind);
 
 	/** One line describing what the screen will eventually do. */
-	static FText GetSubtitleFor(ETerminalKind Kind);
+	static FText GetSubtitleFor(ETerminalKind InKind);
 
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;

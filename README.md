@@ -124,6 +124,37 @@ UnrealEditor-Cmd Ares.uproject -ExecCmds="Automation RunTests Ares.Core" -unatte
 
 ---
 
+## Working notes: what the headless build cannot catch
+
+`AresCore` is verified two ways, but `AresGame`, `AresUI` and `AresEditor` are
+Engine-dependent and compile **only** under UnrealBuildTool. Failures found the
+hard way, recorded so they are not rediscovered:
+
+**MSVC C4458 — "declaration of X hides class member" is an ERROR under UE.**
+GCC's `-Wshadow` does not flag a local that shadows a *class member* from
+inside a member function, so the headless build stays green over it. This has
+bitten twice: locals named `Time`/`Orbit`/`Economy` in a static `FAresData`
+method, and locals named `Slot` in a `UUserWidget` method (`UWidget::Slot` is
+inherited by every widget). Before writing a local, check it does not collide
+with a base-class member — `Slot`, `Owner`, `Role`, `Tags`, `Children`,
+`Canvas`, `RootComponent`, `InputComponent`, `Controller` are the usual traps.
+Prefix constructor and setter parameters with `In`.
+
+**Windows exports nothing by default.** UBT defines `ARESCORE_API` as
+`DLLEXPORT`, itself a macro from UE's platform headers that `AresCore` does not
+include — see `AresApi.h`. Build with `-DARES_SIMULATE_UBT_API=ON` to reproduce
+that define headlessly.
+
+**UBT property names drift between 5.x releases.** `bUseUnityBuild` is on
+`TargetRules`, not `ModuleRules`; `bUseAVX` was superseded by `MinCpuArchX64`.
+Prefer omitting a build-tuning property over guessing its current name.
+
+**Close the editor before building.** Live Coding locks the binaries; the build
+fails and the editor keeps running stale DLLs, which presents as classes
+silently not existing (a flying `ADefaultPawn` instead of `AAresCharacter`).
+
+---
+
 ## Reference implementation
 
 The design document is the working web prototype at

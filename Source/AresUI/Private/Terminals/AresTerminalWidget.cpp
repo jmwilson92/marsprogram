@@ -20,9 +20,9 @@ const FLinearColor SubtitleColor(0.55f, 0.66f, 0.78f, 1.0f);
 const FLinearColor BodyColor(0.72f, 0.55f, 0.20f, 1.0f);
 } // namespace
 
-FText UAresTerminalWidget::GetTitleFor(ETerminalKind Kind)
+FText UAresTerminalWidget::GetTitleFor(ETerminalKind InKind)
 {
-	switch (Kind)
+	switch (InKind)
 	{
 	case ETerminalKind::VehicleAssembly:
 		return LOCTEXT("VabTitle", "VEHICLE CONFIGURATION & MANIFEST");
@@ -37,9 +37,9 @@ FText UAresTerminalWidget::GetTitleFor(ETerminalKind Kind)
 	}
 }
 
-FText UAresTerminalWidget::GetSubtitleFor(ETerminalKind Kind)
+FText UAresTerminalWidget::GetSubtitleFor(ETerminalKind InKind)
 {
-	switch (Kind)
+	switch (InKind)
 	{
 	case ETerminalKind::VehicleAssembly:
 		return LOCTEXT("VabSub",
@@ -95,18 +95,18 @@ TSharedRef<SWidget> UAresTerminalWidget::RebuildWidget()
 		TitleText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Title"));
 		TitleText->SetFont(FCoreStyle::GetDefaultFontStyle("Bold", 40));
 		TitleText->SetColorAndOpacity(FSlateColor(TitleColor));
-		if (UVerticalBoxSlot* Slot = Column->AddChildToVerticalBox(TitleText))
+		if (UVerticalBoxSlot* LayoutSlot = Column->AddChildToVerticalBox(TitleText))
 		{
-			Slot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 10.0f));
+			LayoutSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 10.0f));
 		}
 
 		SubtitleText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Subtitle"));
 		SubtitleText->SetFont(FCoreStyle::GetDefaultFontStyle("Regular", 18));
 		SubtitleText->SetColorAndOpacity(FSlateColor(SubtitleColor));
 		SubtitleText->SetAutoWrapText(true);
-		if (UVerticalBoxSlot* Slot = Column->AddChildToVerticalBox(SubtitleText))
+		if (UVerticalBoxSlot* LayoutSlot = Column->AddChildToVerticalBox(SubtitleText))
 		{
-			Slot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 48.0f));
+			LayoutSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 48.0f));
 		}
 
 		BodyText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("Body"));
@@ -115,9 +115,9 @@ TSharedRef<SWidget> UAresTerminalWidget::RebuildWidget()
 		BodyText->SetText(LOCTEXT("NoData",
 			"NO DATA\n\nThis console is wired to the program simulation in M2.\n"
 			"Nothing behind this screen is running yet."));
-		if (UVerticalBoxSlot* Slot = Column->AddChildToVerticalBox(BodyText))
+		if (UVerticalBoxSlot* LayoutSlot = Column->AddChildToVerticalBox(BodyText))
 		{
-			Slot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 48.0f));
+			LayoutSlot->SetPadding(FMargin(0.0f, 0.0f, 0.0f, 48.0f));
 		}
 
 		CloseButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("CloseButton"));
@@ -128,9 +128,9 @@ TSharedRef<SWidget> UAresTerminalWidget::RebuildWidget()
 		CloseButton->SetContent(CloseLabel);
 		CloseButton->OnClicked.AddDynamic(this, &UAresTerminalWidget::HandleCloseClicked);
 
-		if (UVerticalBoxSlot* Slot = Column->AddChildToVerticalBox(CloseButton))
+		if (UVerticalBoxSlot* LayoutSlot = Column->AddChildToVerticalBox(CloseButton))
 		{
-			Slot->SetHorizontalAlignment(HAlign_Left);
+			LayoutSlot->SetHorizontalAlignment(HAlign_Left);
 		}
 
 		ApplyKindToWidgets();
