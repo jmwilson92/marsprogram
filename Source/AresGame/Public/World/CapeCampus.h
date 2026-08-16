@@ -25,6 +25,7 @@
 #include "CapeCampus.generated.h"
 
 class UInstancedStaticMeshComponent;
+class UPointLightComponent;
 class UTextRenderComponent;
 
 /** Which wall a building's doorway is cut into. */
@@ -123,11 +124,27 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	bool bShowSigns = true;
 
+	/**
+	 * Interior lighting. A roofed blockout box is pitch black inside — the sun
+	 * cannot reach it and there is nothing else emitting. Without these you walk
+	 * into Mission Control and see nothing at all.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bInteriorLights = true;
+
+	/** Lumens per interior light, scaled up for larger rooms. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	float InteriorLightIntensity = 60000.0f;
+
 private:
 	void BuildGroundAndRoad();
 	void BuildBuilding(const FCapeBuilding& Building);
 	void BuildPad();
-	void ClearSigns();
+
+	/** Destroys everything OnConstruction generated, before regenerating. */
+	void ClearGenerated();
+
+	void AddInteriorLight(const FCapeBuilding& Building);
 
 	/** Spawned at BeginPlay rather than in OnConstruction: spawning actors
 	 *  from a construction script is a well-known source of editor duplicates. */
@@ -148,6 +165,10 @@ private:
 
 	FVector EntranceOffsetFor(const FCapeBuilding& Building) const;
 
+	/**
+	 * Signs and lights created by OnConstruction. Tracked together so a rebuild
+	 * can tear down exactly what it made and nothing else.
+	 */
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<UTextRenderComponent>> Signs;
+	TArray<TObjectPtr<USceneComponent>> Generated;
 };

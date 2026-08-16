@@ -154,6 +154,13 @@ headers without supplying link symbols. `AresGame` calls `UUserWidget` directly,
 so it lists `UMG` itself rather than leaning on `AresUI` re-exporting it —
 otherwise the build compiles and then fails at link with LNK2019.
 
+**A placed actor keeps the defaults it was placed with.** `ACapeCampus` builds
+its `Buildings` array in the constructor, but an instance already in a level has
+that array *serialized*. Changing a constructor default does not reach it, and a
+newly added struct member loads as its C++ initializer rather than the value the
+constructor would have set. After changing layout defaults, delete the placed
+actor and drop a fresh one — or right-click the property and Reset to Default.
+
 **Close the editor before building.** Live Coding locks the binaries; the build
 fails and the editor keeps running stale DLLs, which presents as classes
 silently not existing (a flying `ADefaultPawn` instead of `AAresCharacter`).

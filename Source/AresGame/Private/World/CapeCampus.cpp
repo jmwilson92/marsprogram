@@ -1,6 +1,7 @@
 #include "World/CapeCampus.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
@@ -280,16 +281,55 @@ void ACapeCampus::BuildPad()
 	AddCylinder(PadCenter + FVector(0.0f, 0.0f, 600.0f), 900.0f, 12000.0f);
 }
 
-void ACapeCampus::ClearSigns()
+void ACapeCampus::ClearGenerated()
 {
-	for (UTextRenderComponent* Sign : Signs)
+	for (USceneComponent* Component : Generated)
 	{
-		if (Sign)
+		if (Component)
 		{
-			Sign->DestroyComponent();
+			Component->DestroyComponent();
 		}
 	}
-	Signs.Reset();
+	Generated.Reset();
+}
+
+void ACapeCampus::AddInteriorLight(const FCapeBuilding& Building)
+{
+	UPointLightComponent* Light = NewObject<UPointLightComponent>(this);
+	if (!Light)
+	{
+		return;
+	}
+
+	Light->SetupAttachment(GetRootComponent());
+	Light->RegisterComponent();
+	AddInstanceComponent(Light);
+
+	// Movable, so dropping the campus into a level needs no lighting build.
+	Light->SetMobility(EComponentMobility::Movable);
+
+	// Just under the ceiling, or 12 m up in a tall volume like the VAB where a
+	// single fixture at the apex would not reach the floor usefully.
+	const float Height = FMath::Min(Building.Size.Z * 0.8f, 1200.0f);
+	Light->SetRelativeLocation(Building.Center + FVector(0.0f, 0.0f, Height));
+
+	// Reach the far corners: half the diagonal, with headroom.
+	const float Radius = FVector(Building.Size.X, Building.Size.Y, Building.Size.Z).Size() * 0.75f;
+	Light->SetAttenuationRadius(Radius);
+
+	// Bigger rooms need proportionally more light, referenced to a 40 x 30 m box.
+	const float AreaScale = FMath::Clamp(
+		(Building.Size.X * Building.Size.Y) / (4000.0f * 3000.0f), 1.0f, 6.0f);
+	Light->SetIntensity(InteriorLightIntensity * AreaScale);
+
+	// Cool fluorescent. Institutional, per brief §1's tone.
+	Light->SetLightColor(FLinearColor(0.86f, 0.91f, 1.0f));
+
+	// Shadows off: this is a blockout light whose only job is legibility, and
+	// a large-radius shadowcaster in every building is not worth the cost.
+	Light->SetCastShadows(false);
+
+	Generated.Add(Light);
 }
 
 void ACapeCampus::OnConstruction(const FTransform& Transform)
@@ -304,7 +344,7 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	{
 		Cylinders->ClearInstances();
 	}
-	ClearSigns();
+	ClearGenerated();
 
 	BuildGroundAndRoad();
 
@@ -336,7 +376,15 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 		Sign->SetRelativeLocation(
 			Building.Center + EntranceOffsetFor(Building) + FVector(0.0f, 0.0f, Building.Size.Z + 400.0f));
 
-		Signs.Add(Sign);
+		Generated.Add(Sign);
+	}
+
+	if (bInteriorLights)
+	{
+		for (const FCapeBuilding& Building : Buildings)
+		{
+			AddInteriorLight(Building);
+		}
 	}
 
 	BuildPad();
@@ -355,6 +403,8 @@ void ACapeCampus::SpawnTerminals()
 	{
 		return;
 	}
+
+	int32 Spawned = 0;
 
 	for (const FCapeBuilding& Building : Buildings)
 	{
@@ -390,6 +440,11 @@ void ACapeCampus::SpawnTerminals()
 			World->SpawnActor<AAresTerminal>(AAresTerminal::StaticClass(), Location, Rotation, Params))
 		{
 			Terminal->SetKind(Building.TerminalKind);
+			++Spawned;
+			UE_LOG(LogTemp, Log, TEXT("CapeCampus: terminal for %s at %s"),
+				*Building.Id.ToString(), *Location.ToCompactString());
 		}
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("CapeCampus: spawned %d terminal(s)."), Spawned);
 }
