@@ -30,13 +30,18 @@ ACapeCampus::ACapeCampus()
 	Boxes->SetupAttachment(Root);
 	Boxes->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Boxes->SetCollisionResponseToAllChannels(ECR_Block);
-	Boxes->SetMobility(EComponentMobility::Static);
+	// Mobility must not be stricter than the root's. A Static component cannot
+	// attach to a Movable parent — Unreal aborts the attach with a warning and
+	// the component silently renders in world space instead of actor space,
+	// putting the geometry in a different frame from anything spawned through
+	// GetActorTransform(). Leaving these Movable keeps one frame for everything.
+	// Nothing here needs baked lighting: the interior lights are Movable and
+	// Lumen handles the rest.
 
 	Cylinders = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("Cylinders"));
 	Cylinders->SetupAttachment(Root);
 	Cylinders->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Cylinders->SetCollisionResponseToAllChannels(ECR_Block);
-	Cylinders->SetMobility(EComponentMobility::Static);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(CubePath);
 	if (CubeMesh.Succeeded())
@@ -423,7 +428,10 @@ void ACapeCampus::SpawnTerminals()
 		const float AxisExtent = FMath::Abs(Inward.X) > FMath::Abs(Inward.Y)
 			? Building.Size.X
 			: Building.Size.Y;
-		const float Setback = FMath::Max(AxisExtent * 0.5f - 300.0f, 150.0f);
+		// Clearance from the inner wall face: wall thickness, plus the desk's own
+		// depth, plus room to stand. Generous on purpose — a console buried in a
+		// wall is invisible and reads as "the feature does not work".
+		const float Setback = FMath::Max(AxisExtent * 0.5f - 500.0f, 150.0f);
 
 		FActorSpawnParameters Params;
 		Params.Owner = this;

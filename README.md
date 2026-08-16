@@ -154,6 +154,13 @@ headers without supplying link symbols. `AresGame` calls `UUserWidget` directly,
 so it lists `UMG` itself rather than leaning on `AresUI` re-exporting it —
 otherwise the build compiles and then fails at link with LNK2019.
 
+**A child component's mobility may not be stricter than its parent's.** Attaching
+a Static component to a Movable root does not error — Unreal logs a warning,
+aborts the attach, and the component renders in *world* space while everything
+else in the actor renders in *actor* space. Two frames, silently. Symptom:
+geometry looks nearly right but anything positioned via `GetActorTransform()`
+lands offset from it.
+
 **A placed actor keeps the defaults it was placed with.** `ACapeCampus` builds
 its `Buildings` array in the constructor, but an instance already in a level has
 that array *serialized*. Changing a constructor default does not reach it, and a
