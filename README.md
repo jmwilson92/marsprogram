@@ -98,6 +98,19 @@ Rerun after any reference change; the C++ tests will report exactly what drifted
 
 ### Under Unreal
 
+**Close the editor first**, then from the repo root:
+
+```
+.\Build.bat
+```
+
+That builds the `AresEditor` target, Win64 Development. It finds the engine via
+`UE_ROOT`, then the registry, then the usual install paths; set `UE_ROOT`
+yourself if it cannot. `Build.bat Ares` builds the packaged game target instead,
+and a second argument picks the configuration.
+
+The IDE route is equivalent:
+
 ```
 Ares.uproject → right-click → Generate Project Files → build the Editor target
 ```
