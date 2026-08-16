@@ -51,9 +51,13 @@ ACapeCampus::ACapeCampus()
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ConeMesh(ConePath);
 	static ConstructorHelpers::FObjectFinder<UMaterialInterface> TintMaterial(TintMaterialPath);
 
-	if (CubeMesh.Succeeded()) { Boxes->SetStaticMesh(CubeMesh.Object); }
-	if (CylinderMesh.Succeeded()) { Cylinders->SetStaticMesh(CylinderMesh.Object); }
 	if (TintMaterial.Succeeded()) { TintBaseMaterial = TintMaterial.Object; }
+	if (CubeMesh.Succeeded()) { FallbackCube = CubeMesh.Object; }
+	if (CylinderMesh.Succeeded()) { FallbackCylinder = CylinderMesh.Object; }
+	if (ConeMesh.Succeeded()) { FallbackCone = ConeMesh.Object; }
+
+	// Meshes are assigned in OnConstruction from the art slots, so dropping a
+	// Fab asset into a slot takes effect without a restart.
 
 	// The remaining components exist only to carry a different material — an
 	// instanced mesh draws with one material, so colour means another component.
@@ -78,17 +82,30 @@ ACapeCampus::ACapeCampus()
 		return Component;
 	};
 
-	UStaticMesh* Cube = CubeMesh.Succeeded() ? CubeMesh.Object : nullptr;
-	UStaticMesh* Cyl = CylinderMesh.Succeeded() ? CylinderMesh.Object : nullptr;
-	UStaticMesh* Cone = ConeMesh.Succeeded() ? ConeMesh.Object : nullptr;
+	Furniture = MakeInstanced(TEXT("Furniture"), nullptr, true);
+	Screens = MakeInstanced(TEXT("Screens"), nullptr, false);
+	Steel = MakeInstanced(TEXT("Steel"), nullptr, true);
+	SteelBox = MakeInstanced(TEXT("SteelBox"), nullptr, true);
+	SteelCone = MakeInstanced(TEXT("SteelCone"), nullptr, true);
+	Grass = MakeInstanced(TEXT("Grass"), nullptr, false);
+	Foliage = MakeInstanced(TEXT("Foliage"), nullptr, false);
 
-	Furniture = MakeInstanced(TEXT("Furniture"), Cube, true);
-	Screens = MakeInstanced(TEXT("Screens"), Cube, false);
-	Steel = MakeInstanced(TEXT("Steel"), Cyl, true);
-	SteelBox = MakeInstanced(TEXT("SteelBox"), Cube, true);
-	SteelCone = MakeInstanced(TEXT("SteelCone"), Cone, true);
-	Grass = MakeInstanced(TEXT("Grass"), Cube, false);
-	Foliage = MakeInstanced(TEXT("Foliage"), Cone, false);
+	// Defaults keep the fallback look sensible until real assets land.
+	StructureSlot.FallbackTint = FLinearColor(0.42f, 0.42f, 0.44f);
+	FurnitureSlot.FallbackTint = FLinearColor(0.06f, 0.07f, 0.09f);
+	ScreenSlot.FallbackTint = FLinearColor(0.10f, 0.42f, 0.85f);
+	SteelBarrelSlot.FallbackTint = FLinearColor(0.62f, 0.65f, 0.70f);
+	SteelDetailSlot.FallbackTint = FLinearColor(0.62f, 0.65f, 0.70f);
+	NoseconeSlot.FallbackTint = FLinearColor(0.62f, 0.65f, 0.70f);
+	GroundSlot.FallbackTint = FLinearColor(0.16f, 0.30f, 0.11f);
+	TrunkSlot.FallbackTint = FLinearColor(0.20f, 0.14f, 0.09f);
+	CanopySlot.FallbackTint = FLinearColor(0.12f, 0.26f, 0.10f);
+
+	// Props keep their proportions; structure stretches to fill a wall.
+	TrunkSlot.Fit = ECapeFit::Uniform;
+	TrunkSlot.bRandomYaw = true;
+	CanopySlot.Fit = ECapeFit::Uniform;
+	FurnitureSlot.Fit = ECapeFit::Uniform;
 
 	// --- Default layout -----------------------------------------------------
 	//
@@ -381,16 +398,17 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	}
 	ClearGenerated();
 
-	// Tint before filling, so a freshly opened level is already coloured.
-	ApplyTint(Boxes, ConcreteColor);
-	ApplyTint(Cylinders, TrunkColor);
-	ApplyTint(Furniture, FurnitureColor);
-	ApplyTint(Screens, ScreenColor);
-	ApplyTint(Steel, SteelColor);
-	ApplyTint(SteelBox, SteelColor);
-	ApplyTint(SteelCone, SteelColor);
-	ApplyTint(Grass, GrassColor);
-	ApplyTint(Foliage, FoliageColor);
+	// Resolve art before filling: every Add* call measures the mesh that is
+	// actually assigned, so the meshes must be in place first.
+	ApplySlot(Boxes, StructureSlot, FallbackCube);
+	ApplySlot(Furniture, FurnitureSlot, FallbackCube);
+	ApplySlot(Screens, ScreenSlot, FallbackCube);
+	ApplySlot(Steel, SteelBarrelSlot, FallbackCylinder);
+	ApplySlot(SteelBox, SteelDetailSlot, FallbackCube);
+	ApplySlot(SteelCone, NoseconeSlot, FallbackCone);
+	ApplySlot(Grass, GroundSlot, FallbackCube);
+	ApplySlot(Cylinders, TrunkSlot, FallbackCylinder);
+	ApplySlot(Foliage, CanopySlot, FallbackCone);
 
 	BuildGroundAndRoad();
 

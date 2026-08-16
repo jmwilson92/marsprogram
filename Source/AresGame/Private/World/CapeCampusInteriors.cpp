@@ -11,6 +11,7 @@
 #include "World/CapeCampus.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/MaterialInterface.h"
 
@@ -33,59 +34,154 @@ float HashSigned(int32 Index, int32 Salt)
 }
 } // namespace
 
-void ACapeCampus::ApplyTint(UInstancedStaticMeshComponent* Component, const FLinearColor& Color)
+void ACapeCampus::ApplySlot(UInstancedStaticMeshComponent* Component,
+	const FCapeMeshSlot& Slot, UStaticMesh* FallbackMesh)
 {
-	if (!Component || !TintBaseMaterial)
+	if (!Component)
 	{
 		return;
 	}
 
-	// BasicShapeMaterial exposes a "Color" vector parameter. If a future engine
-	// version renames it the call is a silent no-op and everything falls back to
-	// default grey — ugly, but nothing breaks.
-	if (UMaterialInstanceDynamic* Mid = UMaterialInstanceDynamic::Create(TintBaseMaterial, this))
+	// An assigned mesh always wins; the primitive is only ever a stand-in.
+	UStaticMesh* Mesh = Slot.Mesh ? Slot.Mesh.Get() : FallbackMesh;
+	Component->SetStaticMesh(Mesh);
+
+	if (Slot.Material)
 	{
-		Mid->SetVectorParameterValue(TEXT("Color"), Color);
-		Component->SetMaterial(0, Mid);
+		Component->SetMaterial(0, Slot.Material);
+		return;
+	}
+
+	if (Slot.Mesh)
+	{
+		// A real asset ships with its own material. Overriding it with a flat
+		// tint would throw away exactly the thing we imported it for.
+		return;
+	}
+
+	// Programmer-art path: flat-tinted primitive.
+	if (TintBaseMaterial)
+	{
+		if (UMaterialInstanceDynamic* Mid = UMaterialInstanceDynamic::Create(TintBaseMaterial, this))
+		{
+			Mid->SetVectorParameterValue(TEXT("Color"), Slot.FallbackTint);
+			Component->SetMaterial(0, Mid);
+		}
 	}
 }
 
-void ACapeCampus::AddBoxTo(UInstancedStaticMeshComponent* Component, const FVector& Center,
-	const FVector& Size, float YawDegrees)
+FVector ACapeCampus::NativeSizeOf(const UInstancedStaticMeshComponent* Component) const
+{
+	if (!Component || !Component->GetStaticMesh())
+	{
+		return FVector(100.0f);
+	}
+	// Measured rather than assumed: a Fab asset is whatever size its author
+	// made it, and the layout code only ever speaks in centimetres.
+	const FVector Size = Component->GetStaticMesh()->GetBoundingBox().GetSize();
+	return FVector(
+		FMath::Max(Size.X, 1.0f),
+		FMath::Max(Size.Y, 1.0f),
+		FMath::Max(Size.Z, 1.0f));
+}
+
+FVector ACapeCampus::PivotOffsetOf(const UInstancedStaticMeshComponent* Component) const
+{
+	if (!Component || !Component->GetStaticMesh())
+	{
+		return FVector::ZeroVector;
+	}
+	// Engine primitives are centred on their pivot; imported assets frequently
+	// are not. Correcting by the bounds centre means an off-pivot mesh still
+	// lands where the layout asked for it.
+	return Component->GetStaticMesh()->GetBoundingBox().GetCenter();
+}
+
+void ACapeCampus::AddFitted(UInstancedStaticMeshComponent* Component, const FCapeMeshSlot& Slot,
+	const FVector& Center, const FVector& Size, float YawDegrees, int32 InstanceSeed)
 {
 	if (!Component || Size.X <= 0.0f || Size.Y <= 0.0f || Size.Z <= 0.0f)
 	{
 		return;
 	}
-	const FTransform Xf(FRotator(0.0f, YawDegrees, 0.0f), Center, Size / 100.0f);
-	Component->AddInstance(Xf);
+
+	const FVector Native = NativeSizeOf(Component);
+
+	FVector Scale;
+	switch (Slot.Fit)
+	{
+	case ECapeFit::Native:
+		Scale = FVector::OneVector;
+		break;
+	case ECapeFit::Uniform:
+	{
+		// Uniform keeps a prop's proportions. Stretching a tree or a chair to a
+		// requested box makes it look broken in a way a wall never does.
+		const FVector Ratio = Size / Native;
+		Scale = FVector(FMath::Min3(Ratio.X, Ratio.Y, Ratio.Z));
+		break;
+	}
+	case ECapeFit::Stretch:
+	default:
+		Scale = Size / Native;
+		break;
+	}
+
+	Scale *= Slot.ExtraScale;
+
+	float Yaw = YawDegrees;
+	if (Slot.bRandomYaw)
+	{
+		Yaw += Hash01(InstanceSeed, 91) * 360.0f;
+	}
+
+	const FRotator Rotation(0.0f, Yaw, 0.0f);
+	const FVector Offset = Rotation.RotateVector(PivotOffsetOf(Component) * Scale);
+
+	Component->AddInstance(FTransform(Rotation, Center - Offset, Scale));
+}
+
+void ACapeCampus::AddBoxTo(UInstancedStaticMeshComponent* Component, const FVector& Center,
+	const FVector& Size, float YawDegrees)
+{
+	AddFitted(Component, SlotForComponent(Component), Center, Size, YawDegrees,
+		Component ? Component->GetInstanceCount() : 0);
 }
 
 void ACapeCampus::AddCylinderTo(UInstancedStaticMeshComponent* Component,
 	const FVector& BaseCenter, float DiameterCm, float HeightCm)
 {
-	if (!Component || DiameterCm <= 0.0f || HeightCm <= 0.0f)
-	{
-		return;
-	}
-	const FVector Center = BaseCenter + FVector(0.0f, 0.0f, HeightCm * 0.5f);
-	const FTransform Xf(FRotator::ZeroRotator, Center,
-		FVector(DiameterCm / 100.0f, DiameterCm / 100.0f, HeightCm / 100.0f));
-	Component->AddInstance(Xf);
+	// Cylinders and cones are specified base-up, so lift by half the height to
+	// give AddFitted a centre.
+	AddFitted(Component, SlotForComponent(Component),
+		BaseCenter + FVector(0.0f, 0.0f, HeightCm * 0.5f),
+		FVector(DiameterCm, DiameterCm, HeightCm), 0.0f,
+		Component ? Component->GetInstanceCount() : 0);
 }
 
 void ACapeCampus::AddConeTo(UInstancedStaticMeshComponent* Component,
 	const FVector& BaseCenter, float DiameterCm, float HeightCm)
 {
-	if (!Component || DiameterCm <= 0.0f || HeightCm <= 0.0f)
-	{
-		return;
-	}
-	// The basic cone's pivot is at its centre, same as the cylinder's.
-	const FVector Center = BaseCenter + FVector(0.0f, 0.0f, HeightCm * 0.5f);
-	const FTransform Xf(FRotator::ZeroRotator, Center,
-		FVector(DiameterCm / 100.0f, DiameterCm / 100.0f, HeightCm / 100.0f));
-	Component->AddInstance(Xf);
+	AddFitted(Component, SlotForComponent(Component),
+		BaseCenter + FVector(0.0f, 0.0f, HeightCm * 0.5f),
+		FVector(DiameterCm, DiameterCm, HeightCm), 0.0f,
+		Component ? Component->GetInstanceCount() : 0);
+}
+
+const FCapeMeshSlot& ACapeCampus::SlotForComponent(const UInstancedStaticMeshComponent* Component) const
+{
+	// Small and explicit rather than a map: there are nine of these and the
+	// mapping is the API, so making it visible is worth more than making it
+	// clever.
+	if (Component == Furniture) { return FurnitureSlot; }
+	if (Component == Screens) { return ScreenSlot; }
+	if (Component == Steel) { return SteelBarrelSlot; }
+	if (Component == SteelBox) { return SteelDetailSlot; }
+	if (Component == SteelCone) { return NoseconeSlot; }
+	if (Component == Grass) { return GroundSlot; }
+	if (Component == Cylinders) { return TrunkSlot; }
+	if (Component == Foliage) { return CanopySlot; }
+	return StructureSlot;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -467,12 +563,22 @@ void ACapeCampus::BuildLandscape()
 		const float TrunkHeight = 380.0f * Scale;
 		const float CanopyHeight = 620.0f * Scale;
 
-		AddCylinderTo(Cylinders, P, 60.0f * Scale, TrunkHeight);
-		AddConeTo(Foliage, P + FVector(0.0f, 0.0f, TrunkHeight * 0.55f),
-			500.0f * Scale, CanopyHeight);
-		// Second, smaller cone above for a layered silhouette.
-		AddConeTo(Foliage, P + FVector(0.0f, 0.0f, TrunkHeight * 0.55f + CanopyHeight * 0.45f),
-			360.0f * Scale, CanopyHeight * 0.75f);
+		if (bTrunkSlotIsWholeTree)
+		{
+			// A complete Fab tree: one instance, whole height, random yaw so a
+			// few hundred of them do not read as a repeated stamp.
+			AddFitted(Cylinders, TrunkSlot, P, FVector(600.0f, 600.0f, TrunkHeight + CanopyHeight),
+				0.0f, I);
+		}
+		else
+		{
+			AddCylinderTo(Cylinders, P, 60.0f * Scale, TrunkHeight);
+			AddConeTo(Foliage, P + FVector(0.0f, 0.0f, TrunkHeight * 0.55f),
+				500.0f * Scale, CanopyHeight);
+			// Second, smaller cone above for a layered silhouette.
+			AddConeTo(Foliage, P + FVector(0.0f, 0.0f, TrunkHeight * 0.55f + CanopyHeight * 0.45f),
+				360.0f * Scale, CanopyHeight * 0.75f);
+		}
 
 		++Placed;
 	}

@@ -31,6 +31,59 @@ class UPointLightComponent;
 class UStaticMesh;
 class UTextRenderComponent;
 
+/** How an assigned mesh is fitted to the size the layout asks for. */
+UENUM()
+enum class ECapeFit : uint8
+{
+	/** Scale each axis independently. Right for a box-like mesh used as a wall. */
+	Stretch,
+	/** Uniform scale so the mesh's tallest axis matches. Right for props and trees. */
+	Uniform,
+	/** Place at authored size. Right for a mesh that is already the real thing. */
+	Native,
+};
+
+/**
+ * One assignable appearance.
+ *
+ * Everything the campus draws goes through one of these. Leave Mesh empty and
+ * you get the engine primitive and a flat tint — the programmer-art fallback.
+ * Assign a mesh and a material from Fab and the same layout code draws the same
+ * campus with real assets, because the layout asks for "a wall 400 x 60 x 300
+ * cm" and this works out the scale from the mesh's own bounds.
+ *
+ * That indirection is the whole point: art can be replaced without touching a
+ * line of layout.
+ */
+USTRUCT(BlueprintType)
+struct FCapeMeshSlot
+{
+	GENERATED_BODY()
+
+	/** Drop a Fab / Quixel mesh here. Empty falls back to an engine primitive. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	TObjectPtr<UStaticMesh> Mesh;
+
+	/** Overrides the mesh's own material. Empty keeps whatever the mesh ships with. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	TObjectPtr<UMaterialInterface> Material;
+
+	/** Used only when no Mesh and no Material are assigned. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FLinearColor FallbackTint = FLinearColor(0.42f, 0.42f, 0.44f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	ECapeFit Fit = ECapeFit::Stretch;
+
+	/** Extra scale after fitting. Handy for dialling a Fab asset in by eye. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FVector ExtraScale = FVector::OneVector;
+
+	/** Random yaw per instance. Kills the repetition on scattered props. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	bool bRandomYaw = false;
+};
+
 /** Which wall a building's doorway is cut into. */
 UENUM()
 enum class ECapeDoorSide : uint8
@@ -201,28 +254,53 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	int32 BikeCount = 4;
 
-	/* --- palette. Engine-default materials tinted, not authored art. --- */
+	/* ----------------------------------------------------------------------
+	 * Art slots.
+	 *
+	 * Assign Fab / Quixel meshes and materials here and the campus redraws
+	 * itself with them. Nothing below changes any layout — the geometry code
+	 * asks for sizes in centimetres and each slot works out its own scale.
+	 * -------------------------------------------------------------------- */
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor ConcreteColor = FLinearColor(0.42f, 0.42f, 0.44f);
+	/** Walls, floors, slabs, platforms, the pad. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot StructureSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor FurnitureColor = FLinearColor(0.06f, 0.07f, 0.09f);
+	/** Desks, consoles, racks, chairs, benches. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot FurnitureSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor ScreenColor = FLinearColor(0.10f, 0.42f, 0.85f);
+	/** Monitors and the projection wall. Give this an emissive material. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot ScreenSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor SteelColor = FLinearColor(0.62f, 0.65f, 0.70f);
+	/** Rocket barrels and spacecraft buses. Cylindrical. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot SteelBarrelSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor GrassColor = FLinearColor(0.16f, 0.30f, 0.11f);
+	/** Flaps, grid fins, legs, the crane hook. Boxy. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot SteelDetailSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor FoliageColor = FLinearColor(0.12f, 0.26f, 0.10f);
+	/** Nosecones and dishes. Conical. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot NoseconeSlot;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
-	FLinearColor TrunkColor = FLinearColor(0.20f, 0.14f, 0.09f);
+	/** Ground cover. A landscape material belongs here. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot GroundSlot;
+
+	/** Tree trunks — or the whole tree, if the Fab asset includes foliage. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot TrunkSlot;
+
+	/** Canopies. Leave the mesh empty if TrunkSlot is a complete tree. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	FCapeMeshSlot CanopySlot;
+
+	/** Skips canopy instances, for when TrunkSlot is a complete tree asset. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
+	bool bTrunkSlotIsWholeTree = false;
 
 private:
 	void BuildGroundAndRoad();
@@ -245,8 +323,25 @@ private:
 	/** Bikes at the plaza. Spawned at BeginPlay alongside the terminals. */
 	void SpawnBikes();
 
-	/** Tints an instanced component by making a dynamic instance of the base material. */
-	void ApplyTint(UInstancedStaticMeshComponent* Component, const FLinearColor& Color);
+	/**
+	 * Points an instanced component at a slot's mesh and material, falling back
+	 * to the given engine primitive and a flat tint when nothing is assigned.
+	 */
+	void ApplySlot(UInstancedStaticMeshComponent* Component, const FCapeMeshSlot& Slot,
+		UStaticMesh* FallbackMesh);
+
+	/** Which art slot drives a given instanced component. */
+	const FCapeMeshSlot& SlotForComponent(const UInstancedStaticMeshComponent* Component) const;
+
+	/** Native bounds of whatever mesh a component currently holds, in cm. */
+	FVector NativeSizeOf(const UInstancedStaticMeshComponent* Component) const;
+
+	/** Bounds-centre offset, so an off-pivot Fab mesh still lands where asked. */
+	FVector PivotOffsetOf(const UInstancedStaticMeshComponent* Component) const;
+
+	/** Adds one instance sized to Size, honouring the slot's fit mode. */
+	void AddFitted(UInstancedStaticMeshComponent* Component, const FCapeMeshSlot& Slot,
+		const FVector& Center, const FVector& Size, float YawDegrees, int32 InstanceSeed);
 
 	/** Destroys everything OnConstruction generated, before regenerating. */
 	void ClearGenerated();
@@ -274,9 +369,19 @@ private:
 	void AddConeTo(UInstancedStaticMeshComponent* Component, const FVector& BaseCenter,
 		float DiameterCm, float HeightCm);
 
-	/** Base material for tinting. Engine content, loaded once in the constructor. */
+	/** Base material for the flat-tint fallback. Engine content. */
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInterface> TintBaseMaterial;
+
+	/** Engine primitives, used whenever a slot has no mesh assigned. */
+	UPROPERTY(Transient)
+	TObjectPtr<UStaticMesh> FallbackCube;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UStaticMesh> FallbackCylinder;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UStaticMesh> FallbackCone;
 
 	/**
 	 * One wall, with a doorway punched through it if bWithDoor. The gap is

@@ -124,6 +124,36 @@ UnrealEditor-Cmd Ares.uproject -ExecCmds="Automation RunTests Ares.Core" -unatte
 
 ---
 
+## Art direction
+
+**Stylized, not photoreal.** Saturated palette, readable silhouettes over
+surface detail, soft wide-angle sun, bloom carried high. Closer to a stylized
+console game than to a NASA documentary.
+
+This deliberately overrules the original brief §1, which specified "grounded,
+procedural, NASA-flight-controller. Not comedic. Not arcade." That direction
+still governs TONE — the writing, the callouts, the terminal language stay dry
+and institutional. It no longer governs the RENDER.
+
+Two consequences worth knowing:
+
+**Art is assignable, not hardcoded.** `ACapeCampus` draws everything through
+`FCapeMeshSlot` properties. Each slot takes a mesh and a material; the layout
+code only ever asks for sizes in centimetres and each slot works out its own
+scale from the assigned mesh's bounds. Drop a Fab asset into a slot and the
+campus redraws with it — no layout code changes. Leave a slot empty and you get
+an engine primitive with a flat tint, which is the programmer-art fallback and
+is what it looks like today.
+
+**Lighting is code, art is not.** `ACapeSky` owns sun, atmosphere, sky light,
+fog, clouds and colour grading, all as properties. That is the largest visual
+lever available without binary assets, and it is why the same blockout can look
+like a debug scene or like a place depending only on numbers.
+
+Marketplace and Fab content is approved for this project, overriding brief §2.
+
+---
+
 ## Working notes: what the headless build cannot catch
 
 `AresCore` is verified two ways, but `AresGame`, `AresUI` and `AresEditor` are
