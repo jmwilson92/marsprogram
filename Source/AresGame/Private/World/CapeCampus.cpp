@@ -199,9 +199,15 @@ void ACapeCampus::AddCylinder(const FVector& BaseCenter, float DiameterCm, float
 void ACapeCampus::AddWall(const FVector& Center, const FVector& Size, bool bAlongY,
 	bool bWithDoor, float DoorWidth, float DoorHeight)
 {
+	AddWallTo(Boxes, Center, Size, bAlongY, bWithDoor, DoorWidth, DoorHeight);
+}
+
+void ACapeCampus::AddWallTo(UInstancedStaticMeshComponent* Component, const FVector& Center,
+	const FVector& Size, bool bAlongY, bool bWithDoor, float DoorWidth, float DoorHeight)
+{
 	if (!bWithDoor)
 	{
-		AddBox(Center, Size);
+		AddBoxTo(Component, Center, Size);
 		return;
 	}
 
@@ -220,8 +226,8 @@ void ACapeCampus::AddWall(const FVector& Center, const FVector& Size, bool bAlon
 			? FVector(Size.X, JambLength, Size.Z)
 			: FVector(JambLength, Size.Y, Size.Z);
 
-		AddBox(Center + Axis * Offset, JambSize);
-		AddBox(Center - Axis * Offset, JambSize);
+		AddBoxTo(Component, Center + Axis * Offset, JambSize);
+		AddBoxTo(Component, Center - Axis * Offset, JambSize);
 	}
 
 	// Lintel above the opening.
@@ -232,7 +238,7 @@ void ACapeCampus::AddWall(const FVector& Center, const FVector& Size, bool bAlon
 			? FVector(Size.X, Clear, LintelHeight)
 			: FVector(Clear, Size.Y, LintelHeight);
 		const FVector LintelCenter = Center + FVector(0.0f, 0.0f, (Size.Z - LintelHeight) * 0.5f);
-		AddBox(LintelCenter, LintelSize);
+		AddBoxTo(Component, LintelCenter, LintelSize);
 	}
 }
 
@@ -355,6 +361,12 @@ void ACapeCampus::ClearGenerated()
 		}
 	}
 	Generated.Reset();
+
+	// The paint buckets are components too, so the loop above just destroyed
+	// them. Their pointers live in a second array as well, and leaving that
+	// array populated means the next GetPaint hands back a destroyed component
+	// and the whole dressing pass silently draws nothing.
+	PaintBuckets.Reset();
 }
 
 void ACapeCampus::AddInteriorLight(const FCapeBuilding& Building)
@@ -480,6 +492,17 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	if (bBuildInteriors)
 	{
 		BuildInteriors();
+	}
+	if (bDressExteriors)
+	{
+		// After the shells, because the dressing is a skin laid over walls that
+		// already exist — it reads their size and door side rather than defining
+		// them.
+		for (const FCapeBuilding& Building : Buildings)
+		{
+			DressBuildingExterior(Building);
+		}
+		DressPlaza();
 	}
 	if (bBuildLandscape)
 	{

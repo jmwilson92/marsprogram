@@ -183,6 +183,19 @@ const FCapeMeshSlot& ACapeCampus::SlotForComponent(const UInstancedStaticMeshCom
 	if (Component == Cylinders) { return TrunkSlot; }
 	if (Component == Foliage) { return CanopySlot; }
 	if (Component == GroundCover) { return GroundCoverSlot; }
+
+	// Paint buckets are not art slots and must never inherit one. They are the
+	// engine primitive at an exact requested size; falling through to
+	// StructureSlot would hand them its fit mode, so assigning a uniform-fit Fab
+	// mesh to the walls would quietly bend every stripe and window on the campus.
+	for (const TObjectPtr<UInstancedStaticMeshComponent>& Bucket : PaintBuckets)
+	{
+		if (Bucket.Get() == Component)
+		{
+			return PaintSlot;
+		}
+	}
+
 	return StructureSlot;
 }
 
@@ -503,6 +516,15 @@ void ACapeCampus::BuildLaunchVehicle()
 		AddBoxTo(SteelBox,
 			FVector(Base.X + Side * (Diameter * 0.5f + 150.0f), Base.Y, ShipBase + 500.0f),
 			FVector(300.0f, 80.0f, 900.0f));
+	}
+
+	// Black heat shield down the windward side. A bare steel cylinder reads as a
+	// grain silo; the tile line is what makes it Starship from a kilometre out.
+	// Faced back toward the campus, so it is the side you see on the walk in.
+	if (bDressExteriors)
+	{
+		AddHeatTiles(FVector(Base.X, Base.Y, 0.0f), Diameter,
+			ShipBase, ShipBase + ShipBody, /*YawCenter=*/180.0f);
 	}
 }
 

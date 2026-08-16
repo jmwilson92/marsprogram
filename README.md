@@ -202,6 +202,25 @@ actor and drop a fresh one — or right-click the property and Reset to Default.
 fails and the editor keeps running stale DLLs, which presents as classes
 silently not existing (a flying `ADefaultPawn` instead of `AAresCharacter`).
 
+**Decoration collides.** Anything `ACapeCampus` draws through a paint bucket is
+a real, blocking primitive, so a facade band run across the door face is a
+barricade at shin height across the only way into the building — geometrically
+correct, visually invisible, and it makes the room unreachable. Every band or
+prop that crosses a doorway has to be punched the way `AddWall` punches a wall.
+`AddBelt` does this; anything new that skins a face must too.
+
+**Two arrays holding the same components must be cleared together.**
+`ClearGenerated()` destroys everything in `Generated`, and the paint buckets are
+tracked in `PaintBuckets` as well. Resetting only the first leaves the second
+full of destroyed components that `GetPaint` will hand straight back — no crash,
+no warning, the dressing pass just draws nothing on the second rebuild.
+
+**Nothing may fall through to `StructureSlot` by accident.**
+`SlotForComponent` returns it for any component it does not recognise, which
+silently applies the walls' fit mode and random yaw to the caller. Components
+that are not art slots need an explicit case — `PaintSlot` is the fixed one the
+paint buckets use.
+
 ---
 
 ## Reference implementation

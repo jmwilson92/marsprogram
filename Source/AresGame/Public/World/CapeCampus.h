@@ -85,6 +85,40 @@ struct FCapeMeshSlot
 	bool bRandomYaw = false;
 };
 
+/**
+ * Paint colours for the exterior dressing pass.
+ *
+ * Order is load-bearing: CapeCampusDressing.cpp derives its bucket count from
+ * the LAST entry, so Wood must stay last and nothing may be inserted without
+ * checking that file.
+ */
+UENUM()
+enum class ECapePaint : uint8
+{
+	Concrete,
+	White,
+	NasaBlue,
+	Orange,
+	Black,
+	Beige,
+	Steel,
+	Red,
+	Yellow,
+	Glass,
+	HeatTile,
+	DarkTrim,
+	Wood,
+};
+
+/** Primitive a painted instance is drawn with. Cone must stay last (see above). */
+UENUM()
+enum class ECapeBrush : uint8
+{
+	Box,
+	Tube,
+	Cone,
+};
+
 /** Which wall a building's doorway is cut into. */
 UENUM()
 enum class ECapeDoorSide : uint8
@@ -249,6 +283,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	bool bBuildInteriors = true;
 
+	/** Colour-blocked exterior facades, flags, window grids and heat tiles. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bDressExteriors = true;
+
 	/** Stack Super Heavy and Starship on the pad. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	bool bBuildLaunchVehicle = true;
@@ -404,6 +442,66 @@ private:
 	/** Spawns a sky if the level has none. No-op when one already exists. */
 	void EnsureSkyExists();
 
+	/* ----------------------------------------------------------------------
+	 * Exterior dressing — implemented in CapeCampusDressing.cpp.
+	 *
+	 * Colour-blocked facades so each building reads as itself from the plaza
+	 * without an authored mesh. A separate component per paint-and-brush
+	 * combination, because an instanced component carries exactly one material
+	 * and one mesh.
+	 * -------------------------------------------------------------------- */
+
+	FLinearColor ColorOf(ECapePaint Paint) const;
+
+	/** Component for a paint/brush pair, created on first use. */
+	UInstancedStaticMeshComponent* GetPaint(ECapePaint Paint, ECapeBrush Brush = ECapeBrush::Box);
+
+	void PaintBox(ECapePaint Paint, const FVector& Center, const FVector& Size,
+		float YawDegrees = 0.0f);
+	void PaintTube(ECapePaint Paint, const FVector& BaseCenter, float DiameterCm, float HeightCm);
+	void PaintCone(ECapePaint Paint, const FVector& BaseCenter, float DiameterCm, float HeightCm);
+
+	ECapePaint BodyPaintFor(const FCapeBuilding& Building) const;
+
+	void AddFillLight(const FVector& Local, float Intensity, const FLinearColor& Color, float Radius);
+	void AddBelt(const FCapeBuilding& Building, float Z, float Height, ECapePaint Paint);
+	void AddWindowGrid(const FCapeBuilding& Building, ECapeDoorSide Face,
+		int32 Cols, int32 Rows, float Z0, float Z1);
+	void AddFlagOnFace(const FCapeBuilding& Building, ECapeDoorSide Face,
+		float Width, float Height, float MidZ);
+	void AddHeatTiles(const FVector& Base, float Diameter, float Z0, float Z1, float YawCenter);
+
+	/** Thin colour skin over a building's four walls, doorway left open. */
+	void AddFacade(const FCapeBuilding& Building, ECapePaint Paint);
+
+	void DressBuildingExterior(const FCapeBuilding& Building);
+	void DressVabExterior(const FCapeBuilding& Building);
+	void DressMccExterior(const FCapeBuilding& Building);
+	void DressJplExterior(const FCapeBuilding& Building);
+	void DressAdminExterior(const FCapeBuilding& Building);
+	void DressPlaza();
+
+	/**
+	 * One component per paint x brush, indexed Paint * BrushCount + Brush.
+	 * Entries are also tracked in Generated, so ClearGenerated destroys them —
+	 * which means this array MUST be reset at the same time or it is left full
+	 * of dangling pointers that GetPaint will happily return.
+	 */
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UInstancedStaticMeshComponent>> PaintBuckets;
+
+	/**
+	 * Fit rules for the paint buckets. Fixed, and deliberately not editable.
+	 *
+	 * Every other component maps to an art slot the player can drop a Fab asset
+	 * into. The paint buckets must not: they are always the engine primitive at
+	 * an exact requested size, so a stripe is the width it says it is. Without
+	 * this they fall through to StructureSlot, and the moment that slot gets a
+	 * uniform fit or a random yaw the flags and window grids deform with it.
+	 */
+	UPROPERTY(Transient)
+	FCapeMeshSlot PaintSlot;
+
 	/**
 	 * Points an instanced component at a slot's mesh and material, falling back
 	 * to the given engine primitive and a flat tint when nothing is assigned.
@@ -470,6 +568,11 @@ private:
 	 */
 	void AddWall(const FVector& Center, const FVector& Size, bool bAlongY,
 		bool bWithDoor, float DoorWidth, float DoorHeight);
+
+	/** As AddWall, into a chosen component. The doorway is measured from the
+	 *  BOTTOM of Size.Z, so the box passed in has to start at floor level. */
+	void AddWallTo(UInstancedStaticMeshComponent* Component, const FVector& Center,
+		const FVector& Size, bool bAlongY, bool bWithDoor, float DoorWidth, float DoorHeight);
 
 	FVector EntranceOffsetFor(const FCapeBuilding& Building) const;
 
