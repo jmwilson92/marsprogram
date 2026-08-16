@@ -10,9 +10,14 @@ Run ares_report.py FIRST. If the report says you have no meshes or materials,
 this has nothing to work with — import from Fab before running it.
 
 HOW TO RUN
-  Output Log command box:
+  Output Log command box. Which line you need depends on the dropdown to its
+  left — see ares_report.py for why crossing them fails confusingly.
 
+  Cmd:
       py "C:/Users/laugh/Projects/marsprogram/Tools/ue_python/ares_setup_art.py"
+
+  Python:
+      exec(open(r"C:/Users/laugh/Projects/marsprogram/Tools/ue_python/ares_setup_art.py").read())
 
   Then SAVE THE LEVEL (Ctrl+S). Nothing here is saved for you — an unsaved
   crash would throw all of it away, which has already happened once.
