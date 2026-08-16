@@ -24,6 +24,7 @@ public class AresGame : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AresCore",
+			"AresUI",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[]

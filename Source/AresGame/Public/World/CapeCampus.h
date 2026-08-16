@@ -20,6 +20,8 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 
+#include "Terminals/AresTerminalWidget.h"
+
 #include "CapeCampus.generated.h"
 
 class UInstancedStaticMeshComponent;
@@ -70,6 +72,13 @@ struct FCapeBuilding
 	/** The VAB is left open-topped so its volume reads from inside. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	bool bRoof = true;
+
+	/** Brief §4.2 gives every building exactly one console. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bHasTerminal = true;
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	ETerminalKind TerminalKind = ETerminalKind::MissionControl;
 };
 
 UCLASS()
@@ -79,6 +88,8 @@ class ARESGAME_API ACapeCampus : public AActor
 
 public:
 	ACapeCampus();
+
+	virtual void BeginPlay() override;
 
 	/** Rebuilds the whole campus. Runs in-editor on every property change. */
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -117,6 +128,10 @@ private:
 	void BuildBuilding(const FCapeBuilding& Building);
 	void BuildPad();
 	void ClearSigns();
+
+	/** Spawned at BeginPlay rather than in OnConstruction: spawning actors
+	 *  from a construction script is a well-known source of editor duplicates. */
+	void SpawnTerminals();
 
 	/** Adds a cube instance covering an axis-aligned box. */
 	void AddBox(const FVector& Center, const FVector& Size);

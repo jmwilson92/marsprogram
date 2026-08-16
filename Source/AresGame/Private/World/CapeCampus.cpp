@@ -5,6 +5,8 @@
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
 
+#include "World/AresTerminal.h"
+
 namespace
 {
 // Engine basic shapes: editor content, not marketplace content (brief §2).
@@ -67,6 +69,7 @@ ACapeCampus::ACapeCampus()
 		Vab.DoorSide = ECapeDoorSide::MinusY;
 		Vab.WallThickness = 100.0f;
 		Vab.bRoof = false;
+		Vab.TerminalKind = ETerminalKind::VehicleAssembly;
 		Buildings.Add(Vab);
 	}
 	{
@@ -77,6 +80,7 @@ ACapeCampus::ACapeCampus()
 		Mcc.Center = FVector(-8000.0f, -7000.0f, 0.0f);
 		Mcc.Size = FVector(5000.0f, 4000.0f, 1600.0f);
 		Mcc.DoorSide = ECapeDoorSide::PlusY;
+		Mcc.TerminalKind = ETerminalKind::MissionControl;
 		Buildings.Add(Mcc);
 	}
 	{
@@ -87,6 +91,7 @@ ACapeCampus::ACapeCampus()
 		Research.Center = FVector(-8000.0f, 7000.0f, 0.0f);
 		Research.Size = FVector(5000.0f, 4000.0f, 1400.0f);
 		Research.DoorSide = ECapeDoorSide::MinusY;
+		Research.TerminalKind = ETerminalKind::Research;
 		Buildings.Add(Research);
 	}
 	{
@@ -97,6 +102,7 @@ ACapeCampus::ACapeCampus()
 		Hq.Center = FVector(9000.0f, 8000.0f, 0.0f);
 		Hq.Size = FVector(4500.0f, 3500.0f, 1800.0f);
 		Hq.DoorSide = ECapeDoorSide::MinusX;
+		Hq.TerminalKind = ETerminalKind::Administration;
 		Buildings.Add(Hq);
 	}
 }
@@ -334,4 +340,56 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	}
 
 	BuildPad();
+}
+
+void ACapeCampus::BeginPlay()
+{
+	Super::BeginPlay();
+	SpawnTerminals();
+}
+
+void ACapeCampus::SpawnTerminals()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	for (const FCapeBuilding& Building : Buildings)
+	{
+		if (!Building.bHasTerminal)
+		{
+			continue;
+		}
+
+		// Stand the console against the wall opposite the doorway, facing the
+		// way the player will come in. Walking through the door should put the
+		// screen in front of you without hunting for it.
+		const FVector Outward = EntranceOffsetFor(Building).GetSafeNormal();
+		const FVector Inward = -Outward;
+
+		// Extent along the door axis, so the setback scales with the room.
+		const float AxisExtent = FMath::Abs(Inward.X) > FMath::Abs(Inward.Y)
+			? Building.Size.X
+			: Building.Size.Y;
+		const float Setback = FMath::Max(AxisExtent * 0.5f - 300.0f, 150.0f);
+
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.SpawnCollisionHandlingOverride =
+			ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		const FVector Location =
+			GetActorTransform().TransformPosition(Building.Center + Inward * Setback);
+		// The console's front face is -X, so aiming +X inward turns it to face
+		// back toward the door.
+		const FRotator Rotation = Inward.Rotation();
+
+		if (AAresTerminal* Terminal =
+			World->SpawnActor<AAresTerminal>(AAresTerminal::StaticClass(), Location, Rotation, Params))
+		{
+			Terminal->SetKind(Building.TerminalKind);
+		}
+	}
 }

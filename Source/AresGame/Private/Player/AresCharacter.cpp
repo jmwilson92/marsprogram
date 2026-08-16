@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Player/AresPlayerController.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
 
@@ -137,6 +138,17 @@ void AAresCharacter::Look(const FInputActionValue& Value)
 
 void AAresCharacter::Interact()
 {
+	// One key does both jobs. With a screen open the input mode is GameAndUI,
+	// so E still reaches us and reads as "put the screen away".
+	if (AAresPlayerController* PC = Cast<AAresPlayerController>(GetController()))
+	{
+		if (PC->IsTerminalOpen())
+		{
+			PC->HideTerminal();
+			return;
+		}
+	}
+
 	if (Interaction)
 	{
 		Interaction->TryInteract();
