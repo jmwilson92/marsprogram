@@ -215,6 +215,15 @@ actor and drop a fresh one — or right-click the property and Reset to Default.
 fails and the editor keeps running stale DLLs, which presents as classes
 silently not existing (a flying `ADefaultPawn` instead of `AAresCharacter`).
 
+**A braced list in a range-for must be homogeneous.** `for (UBase* P : { A, B,
+Derived })` does not compile: the range expression deduces
+`std::initializer_list<T>` from its *elements*, the loop variable's declared
+type gets no say, and derived-to-base is not applied during that deduction. One
+derived pointer in the list makes `T` undeducible — MSVC C3535. `GroundCover`
+is the hierarchical subclass and needs an explicit `static_cast` to sit in the
+same list as the plain instanced components. GCC catches this too, but only if
+the loop is in a file the headless build compiles, which no `AresGame` file is.
+
 **Decoration collides.** Anything `ACapeCampus` draws through a paint bucket is
 a real, blocking primitive, so a facade band run across the door face is a
 barricade at shin height across the only way into the building — geometrically

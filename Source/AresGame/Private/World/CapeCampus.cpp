@@ -416,10 +416,15 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	{
 		Boxes->ClearInstances();
 	}
+	// GroundCover is the hierarchical subclass, so it needs the cast: a braced
+	// list deduces std::initializer_list<T> from its elements alone, and the
+	// loop variable's declared type gets no say in it. Derived-to-base is not
+	// applied during that deduction, so a single derived pointer in the list
+	// makes T undeducible and the whole loop fails to compile.
 	for (UInstancedStaticMeshComponent* Component :
 		{ Cylinders.Get(), Furniture.Get(), Screens.Get(), Steel.Get(),
 		  SteelBox.Get(), SteelCone.Get(), Grass.Get(), Foliage.Get(),
-		  GroundCover.Get() })
+		  static_cast<UInstancedStaticMeshComponent*>(GroundCover.Get()) })
 	{
 		if (Component)
 		{
