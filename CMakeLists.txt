@@ -31,13 +31,29 @@ file(GLOB ARES_CORE_SOURCES CONFIGURE_DEPENDS Source/AresCore/Private/*.cpp)
 add_library(AresCore STATIC ${ARES_CORE_SOURCES})
 target_include_directories(AresCore PUBLIC Source/AresCore/Public)
 
-target_compile_options(AresCore PRIVATE
-  -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Werror)
+if(MSVC)
+  # /utf-8 is REQUIRED, not cosmetic: the sources contain UTF-8 string literals
+  # and DataTests asserts on their exact byte length. Without it MSVC decodes
+  # them as the system code page and that test fails for the wrong reason.
+  #
+  # /fp:precise is MSVC's default; set explicitly so determinism does not
+  # depend on a toolchain default staying put.
+  #
+  # No /WX here. The strict warnings-as-errors gate runs on Clang/GCC (below),
+  # which is where the code was developed and is verified clean; turning it on
+  # for a compiler this project has not been vetted against would fail the
+  # build on warning-set differences rather than on real defects.
+  set(ARES_WARNINGS /W4 /utf-8 /fp:precise /permissive-)
+else()
+  # Determinism guardrail: -ffp-contract=off stops the compiler fusing
+  # multiply-add in the clock and Kepler solver, which is exactly the kind of
+  # silent drift the determinism test exists to catch.
+  set(ARES_WARNINGS
+    -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wsign-conversion -Werror
+    -ffp-contract=off)
+endif()
 
-# Determinism guardrails. Fast-math would let the compiler reassociate the
-# floating-point work in the clock and Kepler solver, which is exactly the kind
-# of silent drift the determinism test exists to catch.
-target_compile_options(AresCore PRIVATE -ffp-contract=off)
+target_compile_options(AresCore PRIVATE ${ARES_WARNINGS})
 
 # ------------------------------------------------------------------- tests ---
 
@@ -46,7 +62,13 @@ file(GLOB ARES_TEST_SOURCES CONFIGURE_DEPENDS Tests/*.cpp Tests/Harness/*.cpp)
 add_executable(AresCoreTests ${ARES_TEST_SOURCES})
 target_link_libraries(AresCoreTests PRIVATE AresCore)
 target_include_directories(AresCoreTests PRIVATE Tests Tests/Harness)
-target_compile_options(AresCoreTests PRIVATE -Wall -Wextra -ffp-contract=off)
+
+if(MSVC)
+  target_compile_options(AresCoreTests PRIVATE /W3 /utf-8 /fp:precise)
+else()
+  target_compile_options(AresCoreTests PRIVATE -Wall -Wextra -ffp-contract=off)
+endif()
+
 target_compile_definitions(AresCoreTests PRIVATE
   ARES_PROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
 
