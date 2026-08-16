@@ -52,6 +52,20 @@ SLOT_RULES = [
 # fallback already, and picking one here would be a no-op that looks like a win.
 EXCLUDE = ["/Engine/", "BasicShapes", "_Inst_Preview", "/Developers/"]
 
+# Asset NAMES that are never a valid answer, however well they score.
+#
+#   M_MS_*      Quixel master materials. Every Megascans import ships the whole
+#               set, they all contain generic words, and they are uninstanced
+#               parents with no textures bound — assigning one gives a blank
+#               grey surface that looks exactly like the fallback we are trying
+#               to replace.
+#   NewMaterial Unreal's default name for an empty material. One ships inside
+#               the Cut_Grass import, its path contains "grass", and its path is
+#               shorter than the real instance beside it — so on a keyword tie
+#               it would have won and painted the ground blank.
+REJECT_PREFIXES = ["M_MS_"]
+REJECT_NAMES = ["NewMaterial", "NewMaterialInstance"]
+
 
 # --------------------------------------------------------------- helpers ---
 
@@ -106,25 +120,43 @@ def collect_assets():
     return meshes, materials
 
 
+def is_rejected(path):
+    leaf = path.rsplit("/", 1)[-1]
+    return leaf in REJECT_NAMES or any(leaf.startswith(p) for p in REJECT_PREFIXES)
+
+
 def best_match(candidates, keywords):
     """
     Highest-scoring asset for a keyword set, or None.
 
     Scored rather than first-match: a path can contain several keywords, and the
-    one that matches most is almost always the one you meant. Shorter paths win
-    ties, because a deeply nested variant is usually a detail asset.
+    one that matches most is almost always the one you meant.
+
+    Two points beyond raw keyword count, both learned from real Megascans
+    imports. A material INSTANCE outranks anything else at the same score,
+    because MI_foo is the one with textures bound and its parent is not. And
+    ties break toward the SHORTER path only after that, since a deeply nested
+    variant is usually a detail asset.
     """
     if not keywords or not candidates:
         return None
 
-    best, best_score = None, 0
-    for path in candidates:
+    def rank(path):
         lowered = path.lower()
         score = sum(1 for word in keywords if word.lower() in lowered)
-        if score == 0:
+        leaf = path.rsplit("/", 1)[-1]
+        instance_bonus = 1 if leaf.startswith("MI_") else 0
+        # Negative length so that "larger is better" holds for every term.
+        return (score, instance_bonus, -len(path))
+
+    best = None
+    for path in candidates:
+        if is_rejected(path):
             continue
-        if score > best_score or (score == best_score and best and len(path) < len(best)):
-            best, best_score = path, score
+        if rank(path)[0] == 0:
+            continue
+        if best is None or rank(path) > rank(best):
+            best = path
     return best
 
 
