@@ -14,10 +14,13 @@ setup script can use them with confidence.
 HOW TO RUN
   1. Edit -> Plugins -> search "Python" -> enable "Python Editor Script Plugin"
   2. Restart the editor
-  3. Window -> Output Log, switch the dropdown at the bottom-left from "Cmd" to
-     "Python", then paste:
+  3. Window -> Output Log. In the command box at the bottom, type:
 
-         exec(open(r"C:/Users/laugh/Projects/marsprogram/Tools/ue_python/ares_report.py").read())
+         py "C:/Users/laugh/Projects/marsprogram/Tools/ue_python/ares_report.py"
+
+     `py` runs a Python file and works in the default "Cmd" mode, so there is
+     no dropdown to switch. Pasting raw Python into Cmd mode does NOT work —
+     the console reports it as a deprecated command and does nothing.
 
   Everything prints into the Output Log. Select and copy it.
 """
