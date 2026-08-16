@@ -15,6 +15,7 @@
 
 #include "AresTerminal.generated.h"
 
+class UPointLightComponent;
 class UStaticMeshComponent;
 
 UCLASS()
@@ -42,6 +43,14 @@ protected:
 	/** Angled panel, so the console reads as something you stand at. */
 	UPROPERTY(VisibleAnywhere, Category = "Ares|Terminal")
 	TObjectPtr<UStaticMeshComponent> Screen;
+
+	/**
+	 * Screen glow. A dark console in a large grey room is genuinely hard to
+	 * find; a lit screen reads as "this is the thing you came here for" from
+	 * across the floor. Cheap, and it is what a real console looks like.
+	 */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Terminal")
+	TObjectPtr<UPointLightComponent> ScreenGlow;
 
 	UPROPERTY(EditAnywhere, Category = "Ares|Terminal")
 	ETerminalKind Kind = ETerminalKind::MissionControl;

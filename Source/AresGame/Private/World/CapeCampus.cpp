@@ -449,8 +449,21 @@ void ACapeCampus::SpawnTerminals()
 		{
 			Terminal->SetKind(Building.TerminalKind);
 			++Spawned;
-			UE_LOG(LogTemp, Log, TEXT("CapeCampus: terminal for %s at %s"),
-				*Building.Id.ToString(), *Location.ToCompactString());
+
+			// Report containment directly rather than leaving it to be worked
+			// out from coordinates by hand. A console outside its room is
+			// indistinguishable from one that never spawned.
+			const FVector LocalPos = Building.Center + Inward * Setback;
+			const FVector HalfInner = Building.Size * 0.5f
+				- FVector(Building.WallThickness, Building.WallThickness, 0.0f);
+			const bool bInside =
+				FMath::Abs(LocalPos.X - Building.Center.X) < HalfInner.X &&
+				FMath::Abs(LocalPos.Y - Building.Center.Y) < HalfInner.Y;
+
+			UE_LOG(LogTemp, Log,
+				TEXT("CapeCampus: %s terminal world=%s local=%s inside=%s"),
+				*Building.Id.ToString(), *Location.ToCompactString(),
+				*LocalPos.ToCompactString(), bInside ? TEXT("YES") : TEXT("NO"));
 		}
 	}
 

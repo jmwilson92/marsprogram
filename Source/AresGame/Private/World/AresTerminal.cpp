@@ -1,5 +1,6 @@
 #include "World/AresTerminal.h"
 
+#include "Components/PointLightComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "GameFramework/Pawn.h"
@@ -47,6 +48,16 @@ AAresTerminal::AAresTerminal()
 	Screen->SetRelativeScale3D(FVector(0.06f, 1.4f, 0.5f));
 	Screen->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	Screen->SetCollisionResponseToAllChannels(ECR_Block);
+
+	ScreenGlow = CreateDefaultSubobject<UPointLightComponent>(TEXT("ScreenGlow"));
+	ScreenGlow->SetupAttachment(Root);
+	// Just in front of the panel, at eye level for someone standing at it.
+	ScreenGlow->SetRelativeLocation(FVector(-45.0f, 0.0f, 120.0f));
+	ScreenGlow->SetAttenuationRadius(600.0f);
+	ScreenGlow->SetIntensity(3000.0f);
+	// Cool CRT wash. Flight-controller palette, matching the terminal screens.
+	ScreenGlow->SetLightColor(FLinearColor(0.45f, 0.72f, 1.0f));
+	ScreenGlow->SetCastShadows(false);
 }
 
 FText AAresTerminal::GetInteractionLabel() const
