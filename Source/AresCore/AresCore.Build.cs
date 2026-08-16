@@ -24,9 +24,15 @@ public class AresCore : ModuleRules
 	public AresCore(ReadOnlyTargetRules Target) : base(Target)
 	{
 		// The sources are plain C++ with no UE headers, so a shared PCH would
-		// only slow this down, and unity builds would hide missing includes.
+		// only slow this down.
 		PCHUsage = PCHUsageMode.NoPCHs;
-		bUseUnityBuild = false;
+
+		// Deliberately NOT disabling unity builds here. The obvious candidates
+		// are version-unstable: bUseUnityBuild lives on TargetRules, not
+		// ModuleRules, and ModuleRules.bUseUnity has moved across 5.x releases.
+		// Unity builds can mask a missing #include, but these sources already
+		// compile non-unity under the headless CMake build (see CMakeLists.txt),
+		// which covers that risk without betting on a UBT property name.
 
 		PublicDependencyModuleNames.AddRange(new string[]
 		{
