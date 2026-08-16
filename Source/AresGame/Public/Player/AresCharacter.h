@@ -15,6 +15,7 @@
 
 #include "AresCharacter.generated.h"
 
+class AAresBike;
 class UAresInputConfig;
 class UAresInteractionComponent;
 class UCameraComponent;
@@ -34,6 +35,22 @@ public:
 	UCameraComponent* GetFirstPersonCamera() const { return FirstPersonCamera; }
 
 	UAresInteractionComponent* GetInteraction() const { return Interaction; }
+
+	/**
+	 * Overrides walk and sprint speed. Used by the bike; kept general because
+	 * M4's locomotion modes (LowG, ZeroG, HighG) will drive the same knobs.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "Ares|Player")
+	void SetMovementProfile(float InWalk, float InSprint);
+
+	/** Back to the on-foot profile. */
+	UFUNCTION(BlueprintCallable, Category = "Ares|Player")
+	void ResetMovementProfile();
+
+	void SetRiddenBike(AAresBike* Bike) { RiddenBike = Bike; }
+
+	UFUNCTION(BlueprintPure, Category = "Ares|Player")
+	AAresBike* GetRiddenBike() const { return RiddenBike; }
 
 protected:
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -70,4 +87,12 @@ protected:
 	/** Camera height above the capsule centre, cm. */
 	UPROPERTY(EditDefaultsOnly, Category = "Ares|Player")
 	float EyeHeight = 64.0f;
+
+	/** Non-null while riding. E dismounts instead of interacting. */
+	UPROPERTY(Transient)
+	TObjectPtr<AAresBike> RiddenBike;
+
+	/** Active speeds, which the bike overrides and ResetMovementProfile restores. */
+	float ActiveWalkSpeed = 400.0f;
+	float ActiveSprintSpeed = 750.0f;
 };

@@ -25,7 +25,10 @@
 #include "CapeCampus.generated.h"
 
 class UInstancedStaticMeshComponent;
+class UMaterialInstanceDynamic;
+class UMaterialInterface;
 class UPointLightComponent;
+class UStaticMesh;
 class UTextRenderComponent;
 
 /** Which wall a building's doorway is cut into. */
@@ -100,11 +103,54 @@ public:
 	FVector GetBuildingEntrance(FName BuildingId) const;
 
 protected:
+	/*
+	 * One instanced component per material, because an ISM draws with a single
+	 * material. Splitting by colour rather than by object type is what lets the
+	 * whole campus stay a handful of draw calls while still reading as a place
+	 * rather than a grey box.
+	 */
+
+	/** Structure: walls, floors, slabs. Concrete grey. */
 	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
 	TObjectPtr<UInstancedStaticMeshComponent> Boxes;
 
+	/** Tanks, rocket bodies, tree trunks. */
 	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
 	TObjectPtr<UInstancedStaticMeshComponent> Cylinders;
+
+	/** Console furniture, desks, equipment racks. Near-black. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> Furniture;
+
+	/** Screens and the front projection wall. Cool blue, and it glows. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> Screens;
+
+	/*
+	 * Steel needs three components, not one: an instanced mesh is a single mesh
+	 * AND a single material, so a steel barrel, a steel flap and a steel
+	 * nosecone are three different draws no matter how they are tinted.
+	 */
+
+	/** Barrels: Starship, Super Heavy, spacecraft buses. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> Steel;
+
+	/** Boxy steel: flaps, grid fins, landing legs, the crane hook. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> SteelBox;
+
+	/** Nosecones and dishes. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> SteelCone;
+
+	/** Ground cover. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> Grass;
+
+	/** Tree canopies. */
+	UPROPERTY(VisibleAnywhere, Category = "Ares|Cape")
+	TObjectPtr<UInstancedStaticMeshComponent> Foliage;
 
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	TArray<FCapeBuilding> Buildings;
@@ -136,10 +182,71 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
 	float InteriorLightIntensity = 60000.0f;
 
+	/** Fit out the buildings. Off gives you the M1 empty shells. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bBuildInteriors = true;
+
+	/** Stack Super Heavy and Starship on the pad. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bBuildLaunchVehicle = true;
+
+	/** Grass and trees around the campus. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	bool bBuildLandscape = true;
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	int32 TreeCount = 260;
+
+	/** Bikes at the plaza rack, for the ride out to the pad. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape")
+	int32 BikeCount = 4;
+
+	/* --- palette. Engine-default materials tinted, not authored art. --- */
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor ConcreteColor = FLinearColor(0.42f, 0.42f, 0.44f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor FurnitureColor = FLinearColor(0.06f, 0.07f, 0.09f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor ScreenColor = FLinearColor(0.10f, 0.42f, 0.85f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor SteelColor = FLinearColor(0.62f, 0.65f, 0.70f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor GrassColor = FLinearColor(0.16f, 0.30f, 0.11f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor FoliageColor = FLinearColor(0.12f, 0.26f, 0.10f);
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Palette")
+	FLinearColor TrunkColor = FLinearColor(0.20f, 0.14f, 0.09f);
+
 private:
 	void BuildGroundAndRoad();
 	void BuildBuilding(const FCapeBuilding& Building);
 	void BuildPad();
+
+	/* --- interiors. One per building, keyed off FCapeBuilding::Id. --- */
+	void BuildInteriors();
+	void BuildMissionControlInterior(const FCapeBuilding& B);
+	void BuildResearchInterior(const FCapeBuilding& B);
+	void BuildAdministrationInterior(const FCapeBuilding& B);
+	void BuildVabInterior(const FCapeBuilding& B);
+
+	/** Super Heavy plus Starship, stacked on the mount. */
+	void BuildLaunchVehicle();
+
+	/** Grass apron and scattered trees, kept clear of roads and structures. */
+	void BuildLandscape();
+
+	/** Bikes at the plaza. Spawned at BeginPlay alongside the terminals. */
+	void SpawnBikes();
+
+	/** Tints an instanced component by making a dynamic instance of the base material. */
+	void ApplyTint(UInstancedStaticMeshComponent* Component, const FLinearColor& Color);
 
 	/** Destroys everything OnConstruction generated, before regenerating. */
 	void ClearGenerated();
@@ -153,8 +260,23 @@ private:
 	/** Adds a cube instance covering an axis-aligned box. */
 	void AddBox(const FVector& Center, const FVector& Size);
 
+	/** As AddBox, into a chosen component and with a yaw. */
+	void AddBoxTo(UInstancedStaticMeshComponent* Component, const FVector& Center,
+		const FVector& Size, float YawDegrees = 0.0f);
+
 	/** Adds a cylinder instance of the given diameter and height. */
 	void AddCylinder(const FVector& BaseCenter, float DiameterCm, float HeightCm);
+
+	void AddCylinderTo(UInstancedStaticMeshComponent* Component, const FVector& BaseCenter,
+		float DiameterCm, float HeightCm);
+
+	/** Cone standing on its base. Nosecones and tree canopies. */
+	void AddConeTo(UInstancedStaticMeshComponent* Component, const FVector& BaseCenter,
+		float DiameterCm, float HeightCm);
+
+	/** Base material for tinting. Engine content, loaded once in the constructor. */
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInterface> TintBaseMaterial;
 
 	/**
 	 * One wall, with a doorway punched through it if bWithDoor. The gap is

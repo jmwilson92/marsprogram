@@ -11,6 +11,7 @@
 #include "InputMappingContext.h"
 
 #include "Interaction/AresInteractionComponent.h"
+#include "World/AresBike.h"
 #include "Player/AresInputConfig.h"
 
 AAresCharacter::AAresCharacter()
@@ -31,6 +32,9 @@ AAresCharacter::AAresCharacter()
 	bUseControllerRotationYaw = true;
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
+
+	ActiveWalkSpeed = WalkSpeed;
+	ActiveSprintSpeed = SprintSpeed;
 
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
@@ -136,10 +140,26 @@ void AAresCharacter::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(-Axis.Y);
 }
 
+void AAresCharacter::SetMovementProfile(float InWalk, float InSprint)
+{
+	ActiveWalkSpeed = InWalk;
+	ActiveSprintSpeed = InSprint;
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		Movement->MaxWalkSpeed = ActiveWalkSpeed;
+	}
+}
+
+void AAresCharacter::ResetMovementProfile()
+{
+	SetMovementProfile(WalkSpeed, SprintSpeed);
+}
+
 void AAresCharacter::Interact()
 {
-	// One key does both jobs. With a screen open the input mode is GameAndUI,
-	// so E still reaches us and reads as "put the screen away".
+	// One key does every "put this down" job. With a screen open the input mode
+	// is GameAndUI, so E still reaches us; on a bike there is nothing to look at
+	// because the bike is attached to our own camera.
 	if (AAresPlayerController* PC = Cast<AAresPlayerController>(GetController()))
 	{
 		if (PC->IsTerminalOpen())
@@ -147,6 +167,12 @@ void AAresCharacter::Interact()
 			PC->HideTerminal();
 			return;
 		}
+	}
+
+	if (RiddenBike)
+	{
+		RiddenBike->Dismount();
+		return;
 	}
 
 	if (Interaction)
@@ -159,7 +185,9 @@ void AAresCharacter::SprintStart()
 {
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
-		Movement->MaxWalkSpeed = SprintSpeed;
+		// Reads the ACTIVE profile, so sprinting on a bike pedals harder rather
+		// than dropping you back to a jog.
+		Movement->MaxWalkSpeed = ActiveSprintSpeed;
 	}
 }
 
@@ -167,6 +195,6 @@ void AAresCharacter::SprintStop()
 {
 	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
 	{
-		Movement->MaxWalkSpeed = WalkSpeed;
+		Movement->MaxWalkSpeed = ActiveWalkSpeed;
 	}
 }

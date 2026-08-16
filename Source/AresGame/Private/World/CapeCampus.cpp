@@ -2,6 +2,7 @@
 
 #include "Components/InstancedStaticMeshComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/StaticMesh.h"
 #include "UObject/ConstructorHelpers.h"
@@ -15,6 +16,8 @@ namespace
 // S/100 produces a box or cylinder S centimetres wide.
 const TCHAR* CubePath = TEXT("/Engine/BasicShapes/Cube.Cube");
 const TCHAR* CylinderPath = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
+const TCHAR* ConePath = TEXT("/Engine/BasicShapes/Cone.Cone");
+const TCHAR* TintMaterialPath = TEXT("/Engine/BasicShapes/BasicShapeMaterial");
 
 constexpr float UnitCm = 100.0f;
 } // namespace
@@ -44,16 +47,48 @@ ACapeCampus::ACapeCampus()
 	Cylinders->SetCollisionResponseToAllChannels(ECR_Block);
 
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMesh(CubePath);
-	if (CubeMesh.Succeeded())
-	{
-		Boxes->SetStaticMesh(CubeMesh.Object);
-	}
-
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CylinderMesh(CylinderPath);
-	if (CylinderMesh.Succeeded())
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> ConeMesh(ConePath);
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> TintMaterial(TintMaterialPath);
+
+	if (CubeMesh.Succeeded()) { Boxes->SetStaticMesh(CubeMesh.Object); }
+	if (CylinderMesh.Succeeded()) { Cylinders->SetStaticMesh(CylinderMesh.Object); }
+	if (TintMaterial.Succeeded()) { TintBaseMaterial = TintMaterial.Object; }
+
+	// The remaining components exist only to carry a different material — an
+	// instanced mesh draws with one material, so colour means another component.
+	auto MakeInstanced = [&](const TCHAR* Name, UStaticMesh* Mesh, bool bCollides)
+		-> UInstancedStaticMeshComponent*
 	{
-		Cylinders->SetStaticMesh(CylinderMesh.Object);
-	}
+		UInstancedStaticMeshComponent* Component =
+			CreateDefaultSubobject<UInstancedStaticMeshComponent>(Name);
+		Component->SetupAttachment(Root);
+		if (Mesh) { Component->SetStaticMesh(Mesh); }
+		if (bCollides)
+		{
+			Component->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			Component->SetCollisionResponseToAllChannels(ECR_Block);
+		}
+		else
+		{
+			// Trees and grass should not be things you walk into or that block
+			// the interaction trace.
+			Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		return Component;
+	};
+
+	UStaticMesh* Cube = CubeMesh.Succeeded() ? CubeMesh.Object : nullptr;
+	UStaticMesh* Cyl = CylinderMesh.Succeeded() ? CylinderMesh.Object : nullptr;
+	UStaticMesh* Cone = ConeMesh.Succeeded() ? ConeMesh.Object : nullptr;
+
+	Furniture = MakeInstanced(TEXT("Furniture"), Cube, true);
+	Screens = MakeInstanced(TEXT("Screens"), Cube, false);
+	Steel = MakeInstanced(TEXT("Steel"), Cyl, true);
+	SteelBox = MakeInstanced(TEXT("SteelBox"), Cube, true);
+	SteelCone = MakeInstanced(TEXT("SteelCone"), Cone, true);
+	Grass = MakeInstanced(TEXT("Grass"), Cube, false);
+	Foliage = MakeInstanced(TEXT("Foliage"), Cone, false);
 
 	// --- Default layout -----------------------------------------------------
 	//
@@ -126,17 +161,7 @@ void ACapeCampus::AddBox(const FVector& Center, const FVector& Size)
 
 void ACapeCampus::AddCylinder(const FVector& BaseCenter, float DiameterCm, float HeightCm)
 {
-	if (!Cylinders || DiameterCm <= 0.0f || HeightCm <= 0.0f)
-	{
-		return;
-	}
-
-	// The basic cylinder's pivot is at its centre, so lift it by half its height
-	// to sit the base on BaseCenter.
-	const FVector Center = BaseCenter + FVector(0.0f, 0.0f, HeightCm * 0.5f);
-	const FTransform Xf(FRotator::ZeroRotator, Center,
-		FVector(DiameterCm / UnitCm, DiameterCm / UnitCm, HeightCm / UnitCm));
-	Cylinders->AddInstance(Xf);
+	AddCylinderTo(Cylinders, BaseCenter, DiameterCm, HeightCm);
 }
 
 void ACapeCampus::AddWall(const FVector& Center, const FVector& Size, bool bAlongY,
@@ -282,8 +307,8 @@ void ACapeCampus::BuildPad()
 	// Crew access arm at ~65 m — where the ship's airlock sits (brief §4.2).
 	AddBox(TowerBase + FVector(0.0f, 2000.0f, 6500.0f), FVector(400.0f, 4000.0f, 300.0f));
 
-	// Starship stack placeholder: 9 m across, 120 m tall on the mount.
-	AddCylinder(PadCenter + FVector(0.0f, 0.0f, 600.0f), 900.0f, 12000.0f);
+	// The vehicle itself is built by BuildLaunchVehicle, so the pad only
+	// provides the mount and the tower.
 }
 
 void ACapeCampus::ClearGenerated()
@@ -345,11 +370,27 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	{
 		Boxes->ClearInstances();
 	}
-	if (Cylinders)
+	for (UInstancedStaticMeshComponent* Component :
+		{ Cylinders.Get(), Furniture.Get(), Screens.Get(), Steel.Get(),
+		  SteelBox.Get(), SteelCone.Get(), Grass.Get(), Foliage.Get() })
 	{
-		Cylinders->ClearInstances();
+		if (Component)
+		{
+			Component->ClearInstances();
+		}
 	}
 	ClearGenerated();
+
+	// Tint before filling, so a freshly opened level is already coloured.
+	ApplyTint(Boxes, ConcreteColor);
+	ApplyTint(Cylinders, TrunkColor);
+	ApplyTint(Furniture, FurnitureColor);
+	ApplyTint(Screens, ScreenColor);
+	ApplyTint(Steel, SteelColor);
+	ApplyTint(SteelBox, SteelColor);
+	ApplyTint(SteelCone, SteelColor);
+	ApplyTint(Grass, GrassColor);
+	ApplyTint(Foliage, FoliageColor);
 
 	BuildGroundAndRoad();
 
@@ -393,12 +434,26 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 	}
 
 	BuildPad();
+
+	if (bBuildLaunchVehicle)
+	{
+		BuildLaunchVehicle();
+	}
+	if (bBuildInteriors)
+	{
+		BuildInteriors();
+	}
+	if (bBuildLandscape)
+	{
+		BuildLandscape();
+	}
 }
 
 void ACapeCampus::BeginPlay()
 {
 	Super::BeginPlay();
 	SpawnTerminals();
+	SpawnBikes();
 }
 
 void ACapeCampus::SpawnTerminals()
