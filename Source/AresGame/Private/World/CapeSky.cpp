@@ -128,6 +128,17 @@ void ACapeSky::ApplyLookSettings()
 	PP.bOverride_VignetteIntensity = true;
 	PP.VignetteIntensity = VignetteIntensity;
 
+	// Exposure. These values are EV100 because the project sets
+	// ExtendDefaultLuminanceRange (see DefaultEngine.ini) — without that they
+	// would be raw luminance and every number here would mean something else.
+	PP.bOverride_AutoExposureBias = true;
+	PP.AutoExposureBias = ExposureCompensation;
+
+	// The physical camera model would multiply another aperture/ISO term on top
+	// of the lock, so the locked value would not be the value you get.
+	PP.bOverride_AutoExposureApplyPhysicalCameraExposure = true;
+	PP.AutoExposureApplyPhysicalCameraExposure = 0;
+
 	if (bLockExposure)
 	{
 		// Pinning min and max together is the reliable way to defeat
@@ -135,8 +146,20 @@ void ACapeSky::ApplyLookSettings()
 		// because it IS dark — the camera hunting to compensate reads as a bug.
 		PP.bOverride_AutoExposureMinBrightness = true;
 		PP.bOverride_AutoExposureMaxBrightness = true;
-		PP.AutoExposureMinBrightness = ExposureBias;
-		PP.AutoExposureMaxBrightness = ExposureBias;
+		PP.AutoExposureMinBrightness = LockedExposureEV100;
+		PP.AutoExposureMaxBrightness = LockedExposureEV100;
+	}
+	else
+	{
+		// Auto, but bounded, so it cannot hunt to either extreme.
+		PP.bOverride_AutoExposureMinBrightness = true;
+		PP.bOverride_AutoExposureMaxBrightness = true;
+		PP.AutoExposureMinBrightness = 6.0f;
+		PP.AutoExposureMaxBrightness = 16.0f;
+		PP.bOverride_AutoExposureSpeedUp = true;
+		PP.AutoExposureSpeedUp = 2.0f;
+		PP.bOverride_AutoExposureSpeedDown = true;
+		PP.AutoExposureSpeedDown = 1.0f;
 	}
 
 	// Lumen, explicitly, so the look does not depend on project defaults.

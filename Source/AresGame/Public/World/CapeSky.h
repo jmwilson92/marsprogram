@@ -90,7 +90,7 @@ protected:
 	float Contrast = 1.1f;
 
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look")
-	float BloomIntensity = 1.35f;
+	float BloomIntensity = 0.75f;
 
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look")
 	float VignetteIntensity = 0.32f;
@@ -102,8 +102,21 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look")
 	bool bLockExposure = true;
 
-	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look")
-	float ExposureBias = 1.0f;
+	/**
+	 * The exposure to lock to, in EV100 — a photographic stop scale, NOT a
+	 * multiplier. Bright daylight is around 13-15; a lit interior is 7-9; night
+	 * is 0-3. HIGHER IS DARKER, which is the opposite of what the name suggests
+	 * if you read it as a brightness.
+	 *
+	 * Getting this wrong is spectacular: locking to 1.0 is roughly thirteen
+	 * stops open and every surface clips to white.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look", meta = (ClampMin = "-5", ClampMax = "20"))
+	float LockedExposureEV100 = 13.5f;
+
+	/** Trim, in stops, on top of the lock. Negative darkens. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Look", meta = (ClampMin = "-5", ClampMax = "5"))
+	float ExposureCompensation = 0.0f;
 
 	/* --- atmosphere ------------------------------------------------------ */
 
@@ -119,5 +132,5 @@ protected:
 
 	/** Bounce light from the sky. Fills shadows so interiors are not black. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
-	float SkyLightIntensity = 1.6f;
+	float SkyLightIntensity = 1.0f;
 };
