@@ -83,6 +83,26 @@ struct FCapeMeshSlot
 	/** Random yaw per instance. Kills the repetition on scattered props. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art")
 	bool bRandomYaw = false;
+
+	/*
+	 * Surface response for the flat-tint fallback. Ignored the moment a real
+	 * Material is assigned, since that material brings its own.
+	 *
+	 * These only do anything once /Game/Ares/Materials/M_AresTint exists —
+	 * build it with Tools/ue_python/ares_make_materials.py. The engine's
+	 * BasicShapeMaterial has no such parameters and silently ignores them,
+	 * which is what makes it safe to set these unconditionally.
+	 */
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art", meta = (ClampMin = "0", ClampMax = "1"))
+	float FallbackRoughness = 0.72f;
+
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art", meta = (ClampMin = "0", ClampMax = "1"))
+	float FallbackMetallic = 0.0f;
+
+	/** Self-illumination. Above zero makes the surface read as a lit screen. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Cape|Art", meta = (ClampMin = "0"))
+	float FallbackEmissive = 0.0f;
 };
 
 /**
@@ -453,6 +473,10 @@ private:
 
 	FLinearColor ColorOf(ECapePaint Paint) const;
 
+	/** Surface response per paint. Concrete is not shiny; steel is not matte. */
+	float RoughnessOf(ECapePaint Paint) const;
+	float MetallicOf(ECapePaint Paint) const;
+
 	/** Component for a paint/brush pair, created on first use. */
 	UInstancedStaticMeshComponent* GetPaint(ECapePaint Paint, ECapeBrush Brush = ECapeBrush::Box);
 
@@ -548,7 +572,15 @@ private:
 	void AddConeTo(UInstancedStaticMeshComponent* Component, const FVector& BaseCenter,
 		float DiameterCm, float HeightCm);
 
-	/** Base material for the flat-tint fallback. Engine content. */
+	/**
+	 * Swaps TintBaseMaterial to the authored stylized base when the project
+	 * has one. Called every rebuild, so creating the asset takes effect at
+	 * once — see Tools/ue_python/ares_make_materials.py.
+	 */
+	void ResolveTintMaterial();
+
+	/** Base material for the flat-tint fallback. Engine content until an
+	 *  authored one is found, which ResolveTintMaterial does at run time. */
 	UPROPERTY(Transient)
 	TObjectPtr<UMaterialInterface> TintBaseMaterial;
 

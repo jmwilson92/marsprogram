@@ -40,6 +40,39 @@ FLinearColor ACapeCampus::ColorOf(ECapePaint Paint) const
 	}
 }
 
+float ACapeCampus::RoughnessOf(ECapePaint Paint) const
+{
+	// Colour alone does not tell you what a thing is made of. Under one sun,
+	// thirteen surfaces at identical roughness read as thirteen shades of the
+	// same plastic — which is most of what makes a blockout look like a
+	// blockout, quite apart from the shapes.
+	switch (Paint)
+	{
+	case ECapePaint::Concrete: return 0.94f;
+	case ECapePaint::Beige:    return 0.88f;
+	case ECapePaint::HeatTile: return 0.86f;
+	case ECapePaint::Wood:     return 0.80f;
+	case ECapePaint::White:    return 0.74f;
+	case ECapePaint::Black:    return 0.68f;
+	case ECapePaint::Orange:   return 0.60f;
+	case ECapePaint::Red:      return 0.58f;
+	case ECapePaint::NasaBlue: return 0.54f;
+	case ECapePaint::Yellow:   return 0.52f;
+	case ECapePaint::DarkTrim: return 0.42f;
+	case ECapePaint::Steel:    return 0.30f;
+	case ECapePaint::Glass:    return 0.06f;
+	default:                   return 0.72f;
+	}
+}
+
+float ACapeCampus::MetallicOf(ECapePaint Paint) const
+{
+	// Steel is the only true metal here. Painted steel is paint, and reads as
+	// paint — making the hull metallic and the flaps metallic but the orange
+	// stripe on them not is exactly the distinction that sells it.
+	return Paint == ECapePaint::Steel ? 1.0f : 0.0f;
+}
+
 UInstancedStaticMeshComponent* ACapeCampus::GetPaint(ECapePaint Paint, ECapeBrush Brush)
 {
 	const int32 Key = static_cast<int32>(Paint) * BrushCount + static_cast<int32>(Brush);
@@ -87,6 +120,12 @@ UInstancedStaticMeshComponent* ACapeCampus::GetPaint(ECapePaint Paint, ECapeBrus
 		if (UMaterialInstanceDynamic* Mid = UMaterialInstanceDynamic::Create(TintBaseMaterial, this))
 		{
 			Mid->SetVectorParameterValue(TEXT("Color"), ColorOf(Paint));
+			Mid->SetScalarParameterValue(TEXT("Roughness"), RoughnessOf(Paint));
+			Mid->SetScalarParameterValue(TEXT("Metallic"), MetallicOf(Paint));
+			// Glass is the only paint that lights itself: an unlit window in a
+			// lit facade reads as a hole, and these have no interior behind them.
+			Mid->SetScalarParameterValue(TEXT("Emissive"),
+				Paint == ECapePaint::Glass ? 0.55f : 0.0f);
 			Comp->SetMaterial(0, Mid);
 		}
 	}

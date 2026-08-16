@@ -23,6 +23,11 @@ const TCHAR* CylinderPath = TEXT("/Engine/BasicShapes/Cylinder.Cylinder");
 const TCHAR* ConePath = TEXT("/Engine/BasicShapes/Cone.Cone");
 const TCHAR* TintMaterialPath = TEXT("/Engine/BasicShapes/BasicShapeMaterial");
 
+// Authored by Tools/ue_python/ares_make_materials.py, not shipped in the repo,
+// so this is looked up at run time and quietly skipped when absent. A material
+// is an asset and cannot be written in C++, which is why it lives in a script.
+const TCHAR* AresTintPath = TEXT("/Game/Ares/Materials/M_AresTint.M_AresTint");
+
 constexpr float UnitCm = 100.0f;
 } // namespace
 
@@ -115,6 +120,27 @@ ACapeCampus::ACapeCampus()
 	GroundSlot.FallbackTint = FLinearColor(0.16f, 0.30f, 0.11f);
 	TrunkSlot.FallbackTint = FLinearColor(0.20f, 0.14f, 0.09f);
 	CanopySlot.FallbackTint = FLinearColor(0.12f, 0.26f, 0.10f);
+
+	// Surface response, used only while a slot has no assigned material. Same
+	// point as the paint table: what separates concrete from steel from a lit
+	// screen is roughness and metallic, not hue.
+	StructureSlot.FallbackRoughness = 0.90f;
+	FurnitureSlot.FallbackRoughness = 0.48f;
+	GroundSlot.FallbackRoughness = 0.96f;
+	TrunkSlot.FallbackRoughness = 0.86f;
+	CanopySlot.FallbackRoughness = 0.90f;
+	GroundCoverSlot.FallbackRoughness = 0.90f;
+
+	for (FCapeMeshSlot* SteelSlot : { &SteelBarrelSlot, &SteelDetailSlot, &NoseconeSlot })
+	{
+		SteelSlot->FallbackRoughness = 0.30f;
+		SteelSlot->FallbackMetallic = 1.0f;
+	}
+
+	// A console that does not emit is a dark rectangle. These are the only
+	// light sources in the room that the player reads as information.
+	ScreenSlot.FallbackRoughness = 0.14f;
+	ScreenSlot.FallbackEmissive = 1.6f;
 
 	// Props keep their proportions; structure stretches to fill a wall.
 	TrunkSlot.Fit = ECapeFit::Uniform;
@@ -351,6 +377,20 @@ void ACapeCampus::BuildPad()
 	// provides the mount and the tower.
 }
 
+void ACapeCampus::ResolveTintMaterial()
+{
+	// LOAD_NoWarn | LOAD_Quiet because absent is the normal case before the
+	// script has been run, and a warning per rebuild for an expected condition
+	// trains you to ignore the log.
+	UObject* Loaded = StaticLoadObject(UMaterialInterface::StaticClass(), nullptr,
+		AresTintPath, nullptr, LOAD_NoWarn | LOAD_Quiet, nullptr);
+
+	if (UMaterialInterface* Authored = Cast<UMaterialInterface>(Loaded))
+	{
+		TintBaseMaterial = Authored;
+	}
+}
+
 void ACapeCampus::ClearGenerated()
 {
 	for (USceneComponent* Component : Generated)
@@ -432,6 +472,7 @@ void ACapeCampus::OnConstruction(const FTransform& Transform)
 		}
 	}
 	ClearGenerated();
+	ResolveTintMaterial();
 
 	// Resolve art before filling: every Add* call measures the mesh that is
 	// actually assigned, so the meshes must be in place first.

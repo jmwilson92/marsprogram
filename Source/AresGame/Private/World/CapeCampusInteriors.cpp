@@ -66,6 +66,12 @@ void ACapeCampus::ApplySlot(UInstancedStaticMeshComponent* Component,
 		if (UMaterialInstanceDynamic* Mid = UMaterialInstanceDynamic::Create(TintBaseMaterial, this))
 		{
 			Mid->SetVectorParameterValue(TEXT("Color"), Slot.FallbackTint);
+			// Setting parameters the base material does not declare is a no-op,
+			// so this stays correct on the engine's BasicShapeMaterial and only
+			// starts doing anything once M_AresTint is in the project.
+			Mid->SetScalarParameterValue(TEXT("Roughness"), Slot.FallbackRoughness);
+			Mid->SetScalarParameterValue(TEXT("Metallic"), Slot.FallbackMetallic);
+			Mid->SetScalarParameterValue(TEXT("Emissive"), Slot.FallbackEmissive);
 			Component->SetMaterial(0, Mid);
 		}
 	}
