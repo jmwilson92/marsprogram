@@ -123,9 +123,15 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
 	bool bVolumetricClouds = true;
 
-	/** Turn the whole height fog off. */
+	/**
+	 * Height fog. OFF by default.
+	 *
+	 * Sky atmosphere already provides aerial perspective at this scale, so fog
+	 * adds very little here and costs a lot of ways to look wrong. Turn it on
+	 * deliberately if you want weather.
+	 */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
-	bool bHeightFog = true;
+	bool bHeightFog = false;
 
 	/**
 	 * Haze near the ground. Aerial perspective only — enough to push the pad
@@ -143,9 +149,17 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
 	float FogHeightFalloff = 0.45f;
 
-	/** Metres before fog starts. Keeps near geometry crisp. */
+	/**
+	 * Metres before fog starts. LEAVE THIS AT ZERO.
+	 *
+	 * The distance is measured from the CAMERA, not from the world, so a
+	 * non-zero value paints a fog boundary that follows the player around — a
+	 * coloured wall a fixed distance ahead that retreats as you walk toward it.
+	 * It exists for interiors where you want a corridor crisp and the far end
+	 * hazed, and it is wrong for anything open.
+	 */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
-	float FogStartDistanceM = 180.0f;
+	float FogStartDistanceM = 0.0f;
 
 	/**
 	 * Volumetric fog gives real light shafts, but it also hazes everything and
@@ -155,8 +169,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
 	bool bVolumetricFog = false;
 
+	/** Near-neutral. A saturated fog colour reads as a coloured filter, not air. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
-	FLinearColor FogColor = FLinearColor(0.42f, 0.58f, 0.78f);
+	FLinearColor FogColor = FLinearColor(0.58f, 0.63f, 0.70f);
 
 	/** Bounce light from the sky. Fills shadows so interiors are not black. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
