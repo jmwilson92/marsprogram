@@ -424,14 +424,23 @@ void ACapeCampus::SpawnTerminals()
 		const FVector Outward = EntranceOffsetFor(Building).GetSafeNormal();
 		const FVector Inward = -Outward;
 
-		// Extent along the door axis, so the setback scales with the room.
+		// Extent along the door axis, so placement scales with the room.
 		const float AxisExtent = FMath::Abs(Inward.X) > FMath::Abs(Inward.Y)
 			? Building.Size.X
 			: Building.Size.Y;
-		// Clearance from the inner wall face: wall thickness, plus the desk's own
-		// depth, plus room to stand. Generous on purpose — a console buried in a
-		// wall is invisible and reads as "the feature does not work".
-		const float Setback = FMath::Max(AxisExtent * 0.5f - 500.0f, 150.0f);
+		const float HalfExtent = AxisExtent * 0.5f;
+
+		// Stand the console a short walk INSIDE the doorway, not against the far
+		// wall. These rooms are 35-50 m deep; putting the console opposite the
+		// door meant walking into Administration and finding nothing, because
+		// the thing you came for was 40 m away in the dark.
+		//
+		// Setback is measured from the room centre toward the back wall, so it
+		// goes negative in a deep room — the console ends up on the door side of
+		// centre, which is what you want.
+		const float TargetFromDoor = 1000.0f;               // 10 m inside
+		const float AgainstBackWall = HalfExtent - 500.0f;  // small rooms only
+		const float Setback = FMath::Min(AgainstBackWall, TargetFromDoor - HalfExtent);
 
 		FActorSpawnParameters Params;
 		Params.Owner = this;
