@@ -79,13 +79,16 @@ void ACapeSky::ApplyLookSettings()
 	/* --- fog ------------------------------------------------------------- */
 	if (HeightFog)
 	{
+		HeightFog->SetVisibility(bHeightFog);
 		HeightFog->SetFogDensity(FogDensity);
 		HeightFog->SetFogInscatteringColor(FogColor);
-		HeightFog->SetFogHeightFalloff(0.15f);
-		HeightFog->SetStartDistance(2000.0f);
-		// Volumetric fog is what makes sun shafts through the VAB doorway read.
-		HeightFog->SetVolumetricFog(true);
-		HeightFog->SetVolumetricFogExtinctionScale(0.4f);
+		HeightFog->SetFogHeightFalloff(FogHeightFalloff);
+		HeightFog->SetStartDistance(FogStartDistanceM * 100.0f);
+
+		// Volumetric fog is what makes sun shafts through the VAB doorway read,
+		// but it hazes the whole scene to get there and is not cheap.
+		HeightFog->SetVolumetricFog(bVolumetricFog);
+		HeightFog->SetVolumetricFogExtinctionScale(0.25f);
 	}
 
 	/* --- clouds ---------------------------------------------------------- */

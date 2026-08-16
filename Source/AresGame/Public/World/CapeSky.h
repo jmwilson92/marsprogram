@@ -123,9 +123,37 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
 	bool bVolumetricClouds = true;
 
-	/** Haze near the ground. A little separates the pad from the horizon. */
+	/** Turn the whole height fog off. */
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
-	float FogDensity = 0.012f;
+	bool bHeightFog = true;
+
+	/**
+	 * Haze near the ground. Aerial perspective only — enough to push the pad
+	 * away from the horizon, not enough to notice as fog. Above about 0.01 the
+	 * campus starts looking like weather.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
+	float FogDensity = 0.0035f;
+
+	/**
+	 * How fast fog thins with height. LOW values let it climb the whole scene,
+	 * which is what makes a 120 m rocket disappear into soup. High keeps it as a
+	 * ground layer you look across rather than through.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
+	float FogHeightFalloff = 0.45f;
+
+	/** Metres before fog starts. Keeps near geometry crisp. */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
+	float FogStartDistanceM = 180.0f;
+
+	/**
+	 * Volumetric fog gives real light shafts, but it also hazes everything and
+	 * costs real frame time. Off by default: the shafts are worth enabling for a
+	 * launch, not for walking around.
+	 */
+	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
+	bool bVolumetricFog = false;
 
 	UPROPERTY(EditAnywhere, Category = "Ares|Sky|Atmosphere")
 	FLinearColor FogColor = FLinearColor(0.42f, 0.58f, 0.78f);
